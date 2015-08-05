@@ -1,0 +1,116 @@
+#compdef ovirt-remote
+ 
+_ovirt-remote() { 
+    local curcontext="$curcontext" state line
+    typeset -A opt_args
+ 
+    _arguments \
+        '1: :->operation'\
+        '*: :->city'
+ 
+    case $state in
+    operation)
+        _arguments '1:Operations:(new get delete set)'
+    ;;
+    *)
+        case $words[2] in
+        new)
+            _arguments '2:Function:(vm block-domain file-domain openstack_volume_provider disk iso_domain)'
+            case $words[3] in
+              vm)
+                compadd "$@" --datacenter --vmname --cluster --setup
+                ;;
+              iso_domain)
+                compadd "$@" --setup --setup --datacenter
+                ;;
+              block-domain)
+                compadd "$@" --domainname --datacenter --type --luns --domain --setup --host
+                ;;
+              file-domain)
+                compadd "$@" --d --domainname --datacenter --type --address --path --setup --host
+                ;;
+              openstack_volume_provider)
+                compadd "$@" --datacenter --setup --conf --name --url --password --requires_authentication --user --authentication_url --tenant
+                ;;
+              disk)
+                compadd "$@" --datacenter --setup --openstackvolumetype --datacenter --diskname --sparse --bootable --interface --format --size --domain
+                ;;
+              direct_lun)
+                compadd "$@" --datacenter --setup --diskname --bootable --interface --domain --luns
+                ;;
+            esac
+            ;;
+        delete)
+          _arguments '2:Function:(vm domain all_vms_and_disks)'
+          case $words[3] in
+            vm)
+              compadd "$@" --e --vmname --setup
+              ;;
+            domain)
+              compadd  "$@" --e  --domainname --host --setup --datacenter 
+              ;;
+            all_vms_and_disks)
+              compadd  "$@" --e  --setup
+              ;;
+          esac
+          ;;
+        get)
+          _arguments '2:Function:(available_luns_info hosts_info vms_info available_iqns domains_info datacenters_info disks_info)'
+          case $words[3] in
+            available_luns_info)
+              compadd "$@" --setup --setup --host
+              ;;
+            hosts_info)
+              compadd "$@" --setup --setup
+              ;;
+            vms_info)
+              compadd "$@" --setup --setup
+              ;;
+            available_iqns)
+              compadd "$@" --setup --setup --host --address
+              ;;
+            domains_info)
+              compadd "$@" --setup --setup
+              ;;
+            datacenters_info)
+              compadd "$@" --setup --setup
+              ;;
+            disks_info)
+              compadd "$@" --setup --setup
+              ;;
+          esac
+          ;;
+        set)
+          _arguments '2:Function:(iscsi_login domain_state vm_state host_state guestagent operating_system attach_disk)'
+          case $words[3] in
+            host_state)
+              compadd "$@" --setup --setup --host --state
+              ;;
+            vm_state)
+              compadd "$@" --setup --setup --state --vm
+              ;;
+            iscsi_login)
+              compadd "$@" --setup --setup --host --address --target
+              ;;
+            domain_state)
+              compadd "$@" --setup --setup --state --domainname
+              ;;
+            guestagent)
+              compadd "$@" --setup --setup --vmname
+              ;;
+            operating_system)
+              compadd "$@" --setup --setup --vmname --type
+              ;;
+            attach_disk)
+              compadd "$@" --setup --setup --vmname --diskname
+              ;;
+          esac
+          ;;
+        *)
+            _files 
+        esac
+    esac
+}
+ 
+_ovirt-remote "$@"
+

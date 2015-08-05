@@ -1,0 +1,42 @@
+setups=`sed 's/\[/''/g;s/\]/''/g' <<< $(cat /etc/ovirt-remote.conf | grep '\[')`
+export setups
+if [ -f  ~/.ovirt-remote/vm_names ]
+  then
+vm_names=`cat ~/.ovirt-remote/vm_names`
+export vm_names
+fi
+if [ -f  ~/.ovirt-remote/vm_address ]
+  then
+vm_address=`cat ~/.ovirt-remote/vm_address`
+export vm_address
+fi
+if [ -f  ~/.ovirt-remote/os_types ]
+  then
+os_types=`cat ~/.ovirt-remote/os_types`
+export os_types
+fi
+if [ -f  ~/.ovirt-remote/hosts_names ]
+  then
+hosts_names=`cat ~/.ovirt-remote/hosts_names`
+export hosts_names
+fi
+if [ -f  ~/.ovirt-remote/domain_names ]
+  then
+domain_names=`cat ~/.ovirt-remote/domain_names`
+export domain_names
+fi
+if [ -f  ~/.ovirt-remote/luns_id ]
+  then
+luns_id=`cat ~/.ovirt-remote/luns_id`
+export luns_id
+fi
+if [ -f  ~/.ovirt-remote/dc_names ]
+  then
+dc_names=`cat ~/.ovirt-remote/dc_names`
+export dc_names
+fi
+if [ -f  ~/.ovirt-remote/cluster_names ]
+  then
+cluster_names=`cat ~/.ovirt-remote/cluster_names`
+export cluster_names
+fi

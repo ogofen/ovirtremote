@@ -1,0 +1,40 @@
+Usage: ovirt-remote [SETUP-OPTIONS] OBJECT { COMMAND } [COMMAND-OPTIONS
+
+OBJECT
+  get       gets information of a certain setup
+  delete    deletes object in a certain setup
+  new       creates object on a certain setup
+  set       change object in a certain setup
+
+OPTIONS
+  --host    
+  --datacenter   
+  --luns    
+  --cluster   
+  --vmname 
+  --disk
+  --domainname          
+  --state                   
+  --type
+
+EXAMPLES
+
+  1: get's lun's information.  
+  - ovirt-remote [setup] get available_luns_info --host [string]  
+  NOTE:if --host is not mentioned,ovirt-remote will pick one from hosts list  
+  
+  2: returns all domains info  
+  - ovirt-remote get [setup] domains_info
+
+  3:deletes a domain.  
+  - ovirt-remote [setup] delete domain --domainname [string] --datacenter [string]  
+  NOTE:if --datacenter is not mentioned, ovirt-remote will pick the 'Default' datacenter  
+
+  4:new block domain.  
+  - ovirt-remote [setup] new block-domain --datacenter [string] --domain [string] --luns [number] --type [fcp,iscsi]
+
+  5:new iso domain.  
+  - ovirt-remote [setup] new iso-domain --datacenter [string]
+
+  6:set guest-agent to vm.  
+  - ovirt-remote [setup] set guestagent --vm_address [string] --password [string]  

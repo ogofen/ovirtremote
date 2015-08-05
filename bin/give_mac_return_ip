@@ -1,0 +1,18 @@
+#!/bin/bash
+path=/root/dhtest-master
+path_to_file=/root/dhtest-master/dhtest
+is_gcc=`rpm -qa | grep "^gcc-"`
+if ! [ "$is_gcc" ]
+then
+    yum install -y gcc
+fi
+if ! [ -f $path_to_file ]
+then
+    cd /root
+    wget https://github.com/saravana815/dhtest/archive/master.zip
+    unzip master.zip
+    cd $path
+    make
+fi
+cd $path
+./dhtest -m $1 -i $2
