@@ -199,8 +199,7 @@ class Get(object):
                 ip = 'VM is down'
             mac = ''
             for nic in VM.nics.list():
-                mac += nic.get_mac().get_address()
-                mac += '  '
+                mac += nic.get_mac().get_address()+' '
             names = names + ' ' + VM.get_name()
             vm_info.append([VM.get_name(), ip, VM.get_id(),
                             mac, VM.get_status().get_state()])
@@ -244,11 +243,9 @@ class Get(object):
                 sparse = 'preallocated'
             virtual_size = disk.get_size()/pow(1024, 3)
             true_size = disk.get_provisioned_size()/pow(1024, 3)
-
             disk_info.append([disk.get_name(), disk.get_storage_type(),
                               format, sparse, virtual_size, true_size,
                               disk.get_interface(), boot, domain, vm_name])
-
         table = tabulate(disk_info, ["name", "type", "format", "provision",
                                      "V_size(g)", "T_size(g)", "interface",
                                      "is_bootable", "domain", "vm"])
@@ -291,8 +288,6 @@ class Get(object):
 
     def dcinfo(self, options):
         """ list all dc's and their info """
-        path = '%s/dc_names' % self.path
-        path_ = '%s/cluster_names' % self.path
         dc_info = list()
         dc_names = ''
         cluster_names_ = ' '
@@ -311,14 +306,13 @@ class Get(object):
         table = tabulate(dc_info, ["name", "cluster", "release", "id",
                                    "status"])
         print table
-        write_object_to_file(path, dc_names)
-        write_object_to_file(path_, cluster_names_)
+        write_object_to_file('%s/dc_names' % self.path, dc_names)
+        write_object_to_file('%s/cluster_names' % self.path, cluster_names_)
 
     def sdinfo(self, options):
         """ list all dc's and their info """
         sd_info = list()
         domain_names = ''
-        path = "%s/domain_names" % (self.path)
         for dc in self.api.datacenters.list():
             for sd in dc.storagedomains.list():
                 domain_names += ''.join(sd.get_name()+' ')
@@ -335,4 +329,4 @@ class Get(object):
         table = tabulate(sd_info, ["name", "type", "storage", "datacenter",
                                    "id", "status"])
         print table
-        write_object_to_file(path, domain_names)
+        write_object_to_file('%s/domain_names' % (self.path), domain_names)
