@@ -2,12 +2,12 @@
 
 pythonRPM=`rpm -qa | grep ^python-2`
 path=/usr/lib/${pythonRPM:0:6}${pythonRPM:7:3}/site-packages
+sudo_user_path=/home/$SUDO_USER
 if [ -z $SUDO_USER ]
 then
   SUDO_USER=root
+  sudo_user_path=/home/$SUDO_USER
 fi
-
-sudo_user_path=/home/$SUDO_USER
 is_sdk=`rpm -qa | grep "sdk-python"`
 
 if ! [ "$is_sdk" ]
@@ -69,12 +69,12 @@ cp completions/ovirt-remote /etc/bash_completion.d/
 cp completions/global_vars $sudo_user_path
 echo "source /etc/bash_completion.d/ovirt-remote" >> ~/.bashrc
 source /etc/bash_completion.d/ovirt-remote
-if ! [ -d /home/$SUDO_USER/.ovirt-remote ]
+if ! [ -d $sudo_user_path/.ovirt-remote ]
 then
-  mkdir /home/$SUDO_USER/.ovirt-remote
-  chown $SUDO_USER:$SUDO_USER /home/$SUDO_USER/.ovirt-remote 
+  mkdir $sudo_user_path/.ovirt-remote
+  chown $SUDO_USER:$SUDO_USER $sudo_user_path/.ovirt-remote 
 fi
-cp bin/* /home/$SUDO_USER/.ovirt-remote/
+cp bin/* $sudo_user_path/.ovirt-remote/
 echo "setups=\`sed 's/\[/''/g;s/\]/''/g' <<< \$(cat /etc/ovirt-remote.conf | grep '\[')\`">$sudo_user_path/setups
 echo "export setups">>$sudo_user_path/setups
 echo "installation successful"
