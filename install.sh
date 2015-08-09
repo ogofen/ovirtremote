@@ -6,7 +6,7 @@ sudo_user_path=/home/$SUDO_USER
 if [ -z $SUDO_USER ]
 then
   SUDO_USER=root
-  sudo_user_path=/home/$SUDO_USER
+  sudo_user_path=/$SUDO_USER
 fi
 is_sdk=`rpm -qa | grep "sdk-python"`
 
