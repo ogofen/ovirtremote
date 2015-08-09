@@ -22,8 +22,8 @@ class ovirtremote(object):
                            password=self.setup['password'],
                            username=self.setup['user'], insecure=True)
         except Exception, e:
-            self.api = e
-            pass
+            print e
+            sys.exit(1)
         if self.options.password == -1:
             self.options.password = self.setup['default_password']
         self.image_path = '/.iso'

@@ -6,7 +6,6 @@ import sys
 def run(argv):
     """ This Function connects To our engine,classes and db
     """
-
     ovirt = ovirtremote(argv)
     return ovirt.cmd()
 
