@@ -9,7 +9,7 @@ class Host(object):
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.ssh.connect(hostname=address,
                          username='root',
-                         password=psswd, timeout=10)
+                         password=psswd, timeout=15)
 
     def __del__(self):
         self.ssh.close()

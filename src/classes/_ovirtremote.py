@@ -15,7 +15,10 @@ class ovirtremote(object):
             sys.exit(1)
         (self.options, args) = parseOpt(argv)
         self.argv = argv
-        self.path = "/home/"+argv[1]+"/.ovirt-remote"
+        if argv[1] == 'root':
+            self.path = "/"+argv[1]+"/.ovirt-remote"
+        else:
+            self.path = "/home/"+argv[1]+"/.ovirt-remote"
         self.setup = collect_params(argv[2])
         try:
             self.api = API(url=self.setup['url'],

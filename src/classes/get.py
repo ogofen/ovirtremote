@@ -1,5 +1,6 @@
 from tabulate import tabulate
 from utils import write_object_to_file
+import pudb
 from time import sleep
 from hosts import Host
 from ovirtsdk.xml import params
@@ -156,6 +157,7 @@ class Get(object):
             print e
 
     def vm_inquiry(self, options):
+        pudb.set_trace()
         path = "%s/vm_address" % (self.path)
         vm = self.api.vms.get(options.vm)
         if vm is None:
