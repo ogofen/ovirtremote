@@ -9,7 +9,7 @@ class Host(object):
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.ssh.connect(hostname=address,
                          username='root',
-                         password=psswd)
+                         password=psswd, timeout=10)
 
     def __del__(self):
         self.ssh.close()
@@ -26,6 +26,14 @@ class Host(object):
             return "Fedora", re.findall(r'\d\.?\d', str)[0]
         else:
             return "Red Hat", re.findall(r'\d\.?\d', str)[0]
+
+    def make_dir(self, path):
+        cmd = "mkdir %s" % path
+        try:
+            self.run_bash_command(cmd)
+        except Exception:
+            return False
+        return True
 
     def wget_file(self, dest, src):
         cmd = "wget -O %s %s --no-check-certificate" % (dest, src)

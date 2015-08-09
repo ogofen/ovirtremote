@@ -133,6 +133,10 @@ _ovirt-remote()
       COMPREPLY=( $(compgen -W "$domain_names" -- ${cur}) )
       return 0
         ;;
+    --os_type)
+      COMPREPLY=( $(compgen -W "$os_types" -- ${cur}) )
+      return 0
+        ;;
     --luns)
       COMPREPLY=( $(compgen -W "$luns_id" ${cur}) )
       return 0

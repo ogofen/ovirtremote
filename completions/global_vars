@@ -40,3 +40,8 @@ if [ -f  ~/.ovirt-remote/cluster_names ]
 cluster_names=`cat ~/.ovirt-remote/cluster_names`
 export cluster_names
 fi
+if [ -f  ~/.ovirt-remote/os_types ]
+  then
+os_types=`cat ~/.ovirt-remote/os_types`
+export os_types
+fi

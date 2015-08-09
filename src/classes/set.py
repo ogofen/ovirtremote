@@ -138,7 +138,9 @@ class Set(object):
         except Exception, e:
             print e
             return 1
-        if not r_host.has_file(os_info['kernel']):
+        if not r_host.has_file(self.image_path):
+            r_host.make_dir(self.image_path)
+        if not r_host.has_file(os_dest['kernel']):
             self.ini_host(host, os_dest, os_info)
         vm.set_start_paused(False)
         vm.update()
@@ -159,6 +161,7 @@ class Set(object):
             write_object_to_file(path, os_types)
             os_types = os_types.replace(' ', '\n')
             print "specify correct os type:\n%s" % (os_types)
+            write_object_to_file('%s/os_types' % self.path, os_types)
             return 1
         kernel = "%s/%s%s" % (self.image_path, options.type,
                               "-x86_64-vmlinuz")
