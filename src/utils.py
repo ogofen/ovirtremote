@@ -67,13 +67,13 @@ def collect_setup(setup):
     parser.read('/etc/ovirt-remote.conf')
     setup_dict = dict()
     try:
-        setup_dict['url'] = parser.get(setup, 'url')
-        setup_dict['user'] = parser.get(setup, 'user')
-        setup_dict['password'] = parser.get(setup, 'password')
+        setup_dict['url'] = parser.get(setup, 'url').encode('ascii')
+        setup_dict['user'] = parser.get(setup, 'user').encode('ascii')
+        setup_dict['password'] = parser.get(setup, 'password').encode('ascii')
         setup_dict['hypervisor_password'] = parser.get(setup,
-                                                       'servers_password')
+                                                       'servers_password').encode('ascii')
         setup_dict['default_password'] = parser.get('default_password',
-                                                    'password')
+                                                    'password').encode('ascii')
     except Exception:
         print "setup wasn't found"
         sys.exit(1)
