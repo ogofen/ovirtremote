@@ -2,8 +2,14 @@
 
 pythonRPM=`rpm -qa | grep ^python-2`
 path=/usr/lib/${pythonRPM:0:6}${pythonRPM:7:3}/site-packages
+if [ -z $SUDO_USER ]
+then
+  SUDO_USER=root
+fi
+
 sudo_user_path=/home/$SUDO_USER
 is_sdk=`rpm -qa | grep "sdk-python"`
+
 if ! [ "$is_sdk" ]
 then
   echo;echo "dependency failed: please install ovirt-engine-sdk-python or rhevm-sdk-python";echo
