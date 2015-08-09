@@ -41,7 +41,7 @@ def parseOpt(argv):
     parser.add_option("--cluster", dest="cluster", default='Default')
     parser.add_option("--domainname", dest="domain")
     parser.add_option("--password", dest="password", default=-1)
-    parser.add_option("--address", dest="address", default='10.35.160.108')
+    parser.add_option("--address", dest="address", default='-1')
     return parser.parse_args(argv)
 
 
@@ -62,19 +62,45 @@ def get_sd_dc_objects(api, options):
     return sd, dc
 
 
-def collect_setup(setup):
+def collect_params(setup):
     parser = SafeConfigParser()
     parser.read('/etc/ovirt-remote.conf')
     setup_dict = dict()
     try:
         setup_dict['url'] = parser.get(setup, 'url').encode('ascii')
+    except Exception:
+        pass
+    try:
         setup_dict['user'] = parser.get(setup, 'user').encode('ascii')
+    except Exception:
+        pass
+    try:
         setup_dict['password'] = parser.get(setup, 'password').encode('ascii')
-        setup_dict['hypervisor_password'] = parser.get(setup,
-                                                       'servers_password').encode('ascii')
+    except Exception:
+        pass
+    try:
+        setup_dict['hypervisor_password'] = parser.get(setup, 'servers_password').encode('ascii')
+    except Exception:
+        pass
+    try:
         setup_dict['default_password'] = parser.get('default_password',
                                                     'password').encode('ascii')
     except Exception:
-        print "setup wasn't found"
-        sys.exit(1)
+        pass
+    try:
+        setup_dict['password'] = parser.get(setup, 'password').encode('ascii')
+    except Exception:
+        pass
+    try:
+        setup_dict['address'] = parser.get(setup, 'address').encode('ascii')
+    except Exception:
+        pass
+    try:
+        setup_dict['path'] = parser.get(setup, 'path').encode('ascii')
+    except Exception:
+        pass
+    try:
+        setup_dict['luns'] = parser.get(setup, 'luns').encode('ascii')
+    except Exception:
+        pass
     return setup_dict

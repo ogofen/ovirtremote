@@ -4,7 +4,7 @@ from get import Get
 from new import New
 from set import Set
 import sys
-from utils import parseOpt, collect_setup
+from utils import parseOpt, collect_params
 from ovirtsdk.api import API
 
 
@@ -16,7 +16,7 @@ class ovirtremote(object):
         (self.options, args) = parseOpt(argv)
         self.argv = argv
         self.path = "/home/"+argv[1]+"/.ovirt-remote"
-        self.setup = collect_setup(argv[2])
+        self.setup = collect_params(argv[2])
         try:
             self.api = API(url=self.setup['url'],
                            password=self.setup['password'],

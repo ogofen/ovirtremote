@@ -1,5 +1,5 @@
 from ovirtsdk.xml import params
-from utils import get_sd_dc_objects
+from utils import get_sd_dc_objects, collect_params
 from time import sleep
 
 
@@ -50,6 +50,10 @@ class New(object):
             host1 = self.api.hosts.get(options.host)
         else:
             (dc, host1) = self.get_host_and_dc(options)
+        if options.luns == '-1':
+            domain_dict = collect_params(options.domain)
+            options.luns = domain_dict['luns']
+
         luns = list()
         storage = params.Storage(type_=options.type,
                                  volume_group=params.VolumeGroup(),
@@ -166,12 +170,15 @@ class New(object):
         if '-1' not in options.host:
             host1 = self.api.hosts.get(options.host)
         else:
-            host1 = self.api.hosts.list()[0]
+            (dc, host1) = self.get_host_and_dc(options)
         if options.type == 'nfs':
             _type = 'data'
         else:
             _type = 'iso'
-        dc = self.api.datacenters.get(options.datacenter)
+        if options.address == '-1' and options.path == '-1':
+            domain_dict = collect_params(options.domain)
+            options.address = domain_dict['address']
+            options.path = domain_dict['path']
         _storage = params.Storage
         storage = _storage(type_=options.type, address=options.address,
                            path=options.path)
