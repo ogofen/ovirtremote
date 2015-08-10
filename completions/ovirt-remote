@@ -34,7 +34,7 @@ _ovirt-remote()
       return 0
       ;;
     openstack_volume_provider)
-      COMPREPLY=( $(compgen -W "--conf --name --url --password --requires_authentication --user --authentication_url --tenant" -- ${cur}) )
+      COMPREPLY=( $(compgen -W "--datacenter" -- ${cur}) )
       return 0
       ;;
     delete)
@@ -223,10 +223,6 @@ _ovirt-remote()
         ;;
       iscsi-domain)
         COMPREPLY=( $(compgen -W "--domainname --datacenter --luns" -- ${cur}) )
-        return 0
-        ;;
-      openstack_volume_provider)
-        COMPREPLY=( $(compgen -W "--datacenter  --conf --name --url --password --requires_authentication --user --authentication_url --tenant" -- ${cur}) )
         return 0
         ;;
       guestagent)

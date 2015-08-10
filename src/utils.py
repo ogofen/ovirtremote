@@ -71,11 +71,31 @@ def collect_params(setup):
     except Exception:
         pass
     try:
+        setup_dict['name'] = parser.get(setup, 'name').encode('ascii')
+    except Exception:
+        pass
+    try:
         setup_dict['user'] = parser.get(setup, 'user').encode('ascii')
     except Exception:
         pass
     try:
         setup_dict['password'] = parser.get(setup, 'password').encode('ascii')
+    except Exception:
+        pass
+    try:
+        setup_dict['secret_value'] = parser.get(setup, 'secret_value').encode('ascii')
+    except Exception:
+        pass
+    try:
+        setup_dict['uuid'] = parser.get(setup, 'uuid').encode('ascii')
+    except Exception:
+        pass
+    try:
+        setup_dict['tenant'] = parser.get(setup, 'tenant').encode('ascii')
+    except Exception:
+        pass
+    try:
+        setup_dict['auth_url'] = parser.get(setup, 'auth_url').encode('ascii')
     except Exception:
         pass
     try:

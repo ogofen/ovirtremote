@@ -1,6 +1,5 @@
 from tabulate import tabulate
 from utils import write_object_to_file
-from time import sleep
 from hosts import Host
 from ovirtsdk.xml import params
 
@@ -45,7 +44,8 @@ class Get(object):
         for host in self.api.hosts.list():
             if host.get_cluster().get_id() == cluster:
                 r_host = Host(host.get_address(), self.hypervisor_password)
-                if not r_host.has_file('/root/dhtest-master/dhtest'):
+                if not r_host.has_file('/give_mac_return_ip'):
+                    r_host.__del__()
                     self.ini_host(host)
                 return host
 
@@ -139,21 +139,21 @@ class Get(object):
             r_host = Host(host.get_address(), self.hypervisor_password)
         except Exception, e:
             return e
-        cmd = 'sh /root/give_mac_return_ip.sh %s %s' % (mac, bridge)
+        cmd = '/give_mac_return_ip -m %s -i %s' % (mac, bridge)
         out = r_host.run_bash_command(cmd)
+        r_host.__del__()
         return out[out.find('Acquired IP:')+13:].rstrip()
 
     def ini_host(self, host):
         remote_host = Host(host.get_address(), self.hypervisor_password)
         src_1 = "%s/give_mac_return_ip" % (self.path)
-        dest_1 = "/root/give_mac_return_ip.sh"
-        cmd_1 = "sh /root/give_mac_return_ip.sh "
-        remote_host.put_file(src_1, dest_1)
-        sleep(2)
+        dest_1 = "/give_mac_return_ip"
         try:
-            remote_host.run_bash_command(cmd_1)
+            remote_host.put_file(src_1, dest_1)
+            remote_host.run_bash_command('chmod +x %s' % dest_1)
         except Exception as e:
             print e
+        remote_host.__del__()
 
     def vm_inquiry(self, options):
         path = "%s/vm_address" % (self.path)
@@ -166,7 +166,7 @@ class Get(object):
         try:
             ip = self.vm_ip(options, host.get_name())
         except Exception:
-            print "VM \"%s\" is down or non-responsive (ip returned $s)" % (options.vm, ip)
+            print "VM \"%s\" is down or non-responsive" % options.vm
             return 1
         try:
             r_vm = Host(ip, options.password)
@@ -179,9 +179,8 @@ class Get(object):
         print "VM \"%s\" is running %s %s on address: %s" % (vm.get_name(),
                                                              os_info[0],
                                                              os_info[1], ip)
-        file = open(path, 'w')
-        file.write(ip)
-        file.close()
+        write_object_to_file(path, ip)
+        r_vm.__del__()
 
     def vmsinfo(self, options):
         """ list all VM's and their ips """

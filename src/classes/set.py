@@ -111,7 +111,7 @@ class Set(object):
         disk = vm.disks.get(disk.get_name())
         disk.activate()
 
-    def verify_host_on_cluster(self, vm, os_dest, os_info):
+    def select_host_on_cluster(self, vm, os_dest, os_info):
         host = None
         if vm.get_status().get_state() == 'up':
             host = vm.get_host()
@@ -132,7 +132,6 @@ class Set(object):
                 sleep(1)
             host = vm.get_host()
             host = self.api.hosts.get(id=host.get_id())
-            vm.stop()
         try:
             r_host = Host(host.get_address(), self.hypervisor_password)
         except Exception, e:
@@ -142,24 +141,32 @@ class Set(object):
             r_host.make_dir(self.image_path)
         if not r_host.has_file(os_dest['kernel']):
             self.ini_host(host, os_dest, os_info)
+        try:
+            vm.stop()
+            sleep(2)
+        except Exception:
+            pass
         vm.set_start_paused(False)
         vm.update()
-        sleep(3)
-        return 0
+        sleep(1)
+        return host
+
+    def return_os_types(self):
+        out = os.popen('cat /etc/ovirt-remote.conf | grep "^\[[R,F].*-"')
+        os_types = out.read()
+        os_types = os_types.replace('\n', ' ')
+        os_types = os_types.replace('[', '')
+        os_types = os_types.replace(']', '')
+        path = "%s/os_types" % (self.path)
+        write_object_to_file(path, os_types)
+        return os_types.replace(' ', '\n')
 
     def operating_system(self, options):
         vm = self.api.vms.get(options.vm)
         name = options.type
         os_info = self.collect_os(options.type)
         if name is None or os_info is False:
-            out = os.popen('cat /etc/ovirt-remote.conf | grep "^\[[R,F].*-"')
-            os_types = out.read()
-            os_types = os_types.replace('\n', ' ')
-            os_types = os_types.replace('[', '')
-            os_types = os_types.replace(']', '')
-            path = "%s/os_types" % (self.path)
-            write_object_to_file(path, os_types)
-            os_types = os_types.replace(' ', '\n')
+            os_types = self.return_os_types()
             print "specify correct os type:\n%s" % (os_types)
             write_object_to_file('%s/os_types' % self.path, os_types)
             return 1
@@ -170,7 +177,7 @@ class Set(object):
         ks_path = os_info['ks']
         ks_path = ks_path.replace(' ', '%20')
         os_dest = {'name': name, 'kernel': kernel, 'initrd': initrd}
-        self.verify_host_on_cluster(vm, os_dest, os_info)
+        host = self.select_host_on_cluster(vm, os_dest, os_info)
         network = params.Network(name=self.api.networks.list()[0].get_name())
         nic = params.NIC(name='eth0', network=network, interface='virtio')
         if len(vm.nics.list()) == 0:
@@ -192,9 +199,14 @@ class Set(object):
                                      initrd=initrd, kernel=kernel)
         vstart = params.VM(os=os_, run_once=True)
         action = params.Action(vm=vstart)
+        vm.get_placement_policy().set_host(host)
         vm.set_run_once(True)
         vm.update()
-        vm.start(action)
+        try:
+            vm.start(action)
+        except Exception, e:
+            print "operation failed, %s" % e
+            return 1
         Ref = os.fork()
         if Ref == 0:
             self.engine_child(vm)

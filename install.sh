@@ -74,7 +74,8 @@ then
   mkdir $sudo_user_path/.ovirt-remote
   chown $SUDO_USER:$SUDO_USER $sudo_user_path/.ovirt-remote 
 fi
+cd dhcp_test
+make
+cd ..
 cp bin/* $sudo_user_path/.ovirt-remote/
-echo "setups=\`sed 's/\[/''/g;s/\]/''/g' <<< \$(cat /etc/ovirt-remote.conf | grep '\[')\`">$sudo_user_path/setups
-echo "export setups">>$sudo_user_path/setups
 echo "installation successful"

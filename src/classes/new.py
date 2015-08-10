@@ -195,46 +195,21 @@ class New(object):
         """ add cinder domain """
 
         dc = self.api.datacenters.get(options.datacenter)
-        if options.conf != '-1':
-            with open('/etc/ovirt-remote.conf', 'r') as f:
-                line = f.readline()
-                while line:
-                    if 'openstack_volume_provider' in line:
-                        line = f.readline()
-                        options.name = line[line.find('=')+1:-1]
-                        line = f.readline()
-                        options.password = line[line.find('=')+1:-1]
-                        line = f.readline()
-                        options.url = line[line.find('=')+1:-1]
-                        line = f.readline()
-                        options.requires_authentication = line[line.find('=')+1:-1]
-                        line = f.readline()
-                        options.user = line[line.find('=')+1:-1]
-                        line = f.readline()
-                        options.authentication_url = line[line.find('=')+1:-1]
-                        line = f.readline()
-                        options.tenant = line[line.find('=')+1:-1]
-                        line = f.readline()
-                        options.uuid = line[line.find('=')+1:-1]
-                        line = f.readline()
-                        options.secret_value = line[line.find('=')+1:-1]
-                        break
-                    line = f.readline()
-        cinder = params.OpenStackVolumeProvider
-        cinder = cinder(name=options.name, password=options.password,
-                        url=options.url,
-                        requires_authentication=options.requires_authentication,
-                        username=options.user,
-                        authentication_url=options.authentication_url,
-                        tenant_name=options.tenant)
-        self.api.openstackvolumeproviders.add(cinder)
-        sd = self.api.storagedomains.get(options.name)
+        cinder = collect_params('openstack_volume_provider')
+        cinder_sd = params.OpenStackVolumeProvider
+        cinder_sd = cinder_sd(name=cinder['name'], password=cinder['password'],
+                              url=cinder['url'], username=cinder['user'],
+                              authentication_url=cinder['auth_url'],
+                              tenant_name=cinder['tenant'])
+        cinder_sd.set_requires_authentication(True)
+        self.api.openstackvolumeproviders.add(cinder_sd)
+        sd = self.api.storagedomains.get(cinder['name'])
         dc.storagedomains.add(sd)
         sleep(5)
-        cinder = self.api.openstackvolumeproviders.get(options.name)
+        cinder_sd = self.api.openstackvolumeproviders.get(cinder['name'])
         secret = params.OpenstackVolumeAuthenticationKey()
-        secret.set_uuid(options.uuid)
-        secret.set_id(options.uuid)
-        secret.set_value(options.secret_value)
+        secret.set_uuid(cinder['uuid'])
+        secret.set_id(cinder['uuid'])
+        secret.set_value(cinder['secret_value'])
         secret.set_usage_type('ceph')
-        cinder.authenticationkeys.add(secret)
+        cinder_sd.authenticationkeys.add(secret)
