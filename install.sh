@@ -9,23 +9,26 @@ then
   sudo_user_path=/$SUDO_USER
 fi
 is_sdk=`rpm -qa | grep "sdk-python"`
-
 if ! [ "$is_sdk" ]
 then
   yum install ovirt-engine-sdk-python -y 
 fi
+is_gcc=`rpm -qa | grep "^gcc"`
+if ! [ "$is_gcc" ]
+then
+  yum install gcc -y 
+fi
+
 is_pydevel=`rpm -qa | grep "python-devel"`
 if ! [ "$is_pydevel" ]
 then
-  echo;echo "dependency failed: please install python-devel";echo
-  exit
+  yum install python-devel -y
 fi
 
 is_pip=`rpm -qa | grep "python-pip"`
 if ! [ "$is_pip" ]
 then
   yum install python-pip -y
-  exit
 fi
 is_tabulate=`pip list | grep "tabulate"`
 if ! [ "$is_tabulate" ]
