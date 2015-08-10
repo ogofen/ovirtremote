@@ -317,14 +317,20 @@ class Get(object):
         for dc in self.api.datacenters.list():
             for sd in dc.storagedomains.list():
                 domain_names += ''.join(sd.get_name()+' ')
-                sd_info.append([sd.get_name(), sd.get_type(),
+                sd_name = sd.get_name()
+                if sd.get_master() is True:
+                    sd_name += '(master)'
+                sd_info.append([sd_name, sd.get_type(),
                                 sd.get_storage().get_type(), dc.get_name(),
                                 sd.get_id(), sd.get_status().get_state()])
         table = tabulate(sd_info, ["name", "type", "storage", "datacenter",
                                    "id", "status"])
         for sd in self.api.storagedomains.list():
             if table.find(sd.get_name()) == -1:
-                sd_info.append([sd.get_name(), sd.get_type(),
+                sd_name = sd.get_name()
+                if sd.get_master() is True:
+                    sd_name += '(master)'
+                sd_info.append([sd_name, sd.get_type(),
                                 sd.get_storage().get_type(), '-',
                                 sd.get_id(), sd.get_status().get_state()])
         table = tabulate(sd_info, ["name", "type", "storage", "datacenter",
