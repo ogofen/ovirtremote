@@ -12,8 +12,7 @@ is_sdk=`rpm -qa | grep "sdk-python"`
 
 if ! [ "$is_sdk" ]
 then
-  echo;echo "dependency failed: please install ovirt-engine-sdk-python or rhevm-sdk-python";echo
-  exit
+  yum install ovirt-engine-sdk-python -y 
 fi
 is_pydevel=`rpm -qa | grep "python-devel"`
 if ! [ "$is_pydevel" ]
