@@ -260,8 +260,11 @@ class Get(object):
 
         for host in self.api.hosts.list():
             tmp_host_info = list()
+            host_name = host.get_name()
+            if host.get_storage_manager().get_valueOf_() == 'true':
+                host_name += ' (spm)'
             hosts_names += ''.join(host.get_name()+' ')
-            tmp_host_info.append(host.get_name())
+            tmp_host_info.append(host_name)
             tmp_host_info.append(host.get_address())
             tmp_host_info.append(host.get_id())
             tmp_host_info.append(host.get_status().get_state())
