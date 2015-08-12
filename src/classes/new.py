@@ -115,9 +115,9 @@ class New(object):
                            interface=options.interface, format=options.format,
                            bootable=options.bootable, sparse=options.sparse,
                            name=options.disk)
-        if options.domain == 'cinder':
+        if sd.get_type() == 'volume':
             cinder = self.api.openstackvolumeproviders.get('cinder')
-            vol_type = cinder.volumetypes.get(options.openstackvolumetype)
+            vol_type = cinder.volumetypes.get('ceph')
             disk.set_openstack_volume_type(vol_type)
         self.api.disks.add(disk)
         sleep(5)
