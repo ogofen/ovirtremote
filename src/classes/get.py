@@ -63,12 +63,14 @@ class Get(object):
             lun_info = list()
             lun_info.append(storage_.get_id())
             lun_info.append(storage_.get_type())
+            state = storage_.get_logical_unit()[0].get_status()
+            size = storage_.get_logical_unit()[0].get_size()/pow(1024, 3)
             try:
                 vendor = storage_.get_logical_unit()[0].get_vendor_id()
-                state = storage_.get_logical_unit()[0].get_status()
             except Exception:
                 vendor = "not specified"
             lun_info.append(state)
+            lun_info.append(size)
             lun_info.append(vendor)
             luns_info_list.append(lun_info)
 
@@ -77,7 +79,8 @@ class Get(object):
             return 0
 
         print "host %s" % (h1.get_name())
-        table = tabulate(luns_info_list, ["id", "type", "status", "vendor"])
+        table = tabulate(luns_info_list, ["id", "type", "status", "size",
+                                          "vendor"])
         title = table.find(luns_info_list[0][0])
         for domain in self.api.storagedomains.list():
             if self.is_block(domain.get_storage().get_type()):

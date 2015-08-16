@@ -143,8 +143,9 @@ class New(object):
         options.disk = options.vm + "_Disk_1"
         self.disk(options)
         sleep(5)
+        sd = self.api.storagedomains.get(options.domain)
         vm = self.api.vms.get(options.vm)
-        disk = self.api.disks.get(options.disk)
+        disk = sd.disks.get(options.disk)
         vm.disks.add(disk)
         sleep(2)
         disk = vm.disks.get(disk.get_name())
