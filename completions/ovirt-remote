@@ -14,7 +14,7 @@ _ovirt-remote()
       return 0
       ;;
 	  new)
-      COMPREPLY=( $(compgen -W "vm iscsi-domain fcp-domain vm_and_bootable_disk nfs-domain openstack_volume_provider disk direct_lun iso_domain" ${cur}) )
+      COMPREPLY=( $(compgen -W "vm iscsi-domain cluster fcp-domain host datacenter vm_and_bootable_disk nfs-domain openstack_volume_provider disk direct_lun iso_domain" ${cur}) )
       return 0
       ;;
 	  set)
@@ -38,7 +38,7 @@ _ovirt-remote()
       return 0
       ;;
     delete)
-      COMPREPLY=( $(compgen -W "vm domain all_vms_and_disks" ${cur}) )
+      COMPREPLY=( $(compgen -W "vm domain host cluster all_vms_and_disks" ${cur}) )
       return 0
       ;;
     all_vms_and_disks)
@@ -46,10 +46,10 @@ _ovirt-remote()
       return 0
       ;;
     get)
-      COMPREPLY=( $(compgen -W "available_luns_info hosts_info vms_info vm_inquiry iqns_discovery domains_info datacenters_info disks_info" ${cur}) )
+      COMPREPLY=( $(compgen -W "block_storage_span hosts_info vms_info vm_inquiry iqns_discovery domains_info datacenters_info disks_info" ${cur}) )
       return 0
       ;;
-    available_luns_info)
+    block_storage_span)
       COMPREPLY=( $(compgen -W "--host" -- ${cur}) )
       return 0
       ;;
@@ -153,6 +153,10 @@ _ovirt-remote()
       COMPREPLY=( $(compgen -W "$hosts_names" -- ${cur}) )
       return 0
         ;;
+    --hostname)
+      COMPREPLY=( $(compgen -W "$hosts_names" -- ${cur}) )
+      return 0
+        ;;
     --vm_address)
       COMPREPLY=( $(compgen -W "$vm_address" -- ${cur}) )
       return 0
@@ -161,6 +165,19 @@ _ovirt-remote()
       ;;
     esac
    case "$command" in
+    host)
+      COMPREPLY=( $(compgen -W "--cluster --hostname --address" -- ${cur}) )
+      return 0
+      ;;
+    datacenter)
+      COMPREPLY=( $(compgen -W "--datacentername --dc_version" -- ${cur}) )
+      return 0
+      ;;
+    cluster)
+      COMPREPLY=( $(compgen -W "--datacenter --clustername" -- ${cur}) )
+      return 0
+      ;;
+
       attach_disk)
         COMPREPLY=( $(compgen -W "--vmname --diskname" -- ${cur}) )
         return 0
@@ -201,7 +218,7 @@ _ovirt-remote()
         COMPREPLY=( $(compgen -W "--host --address" -- ${cur}) )
         return 0
         ;;
-      available_luns_info)
+      block_storage_span)
         COMPREPLY=( $(compgen -W "--host" -- ${cur}) )
         return 0
         ;;

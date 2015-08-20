@@ -21,7 +21,7 @@ class Get(object):
         return "get"
 
     def get(self, string):
-        if string == 'available_luns_info':
+        if string == 'block_storage_span':
             return self.Available_luns_list
         if string == 'hosts_info':
             return self.hostsinfo

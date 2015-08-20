@@ -1,4 +1,5 @@
 from time import sleep
+import sys
 import os
 from configparser import SafeConfigParser
 from hosts import Host
@@ -113,26 +114,21 @@ class Set(object):
 
     def select_host_on_cluster(self, vm, os_dest, os_info):
         host = None
-        if vm.get_status().get_state() == 'up':
-            host = vm.get_host()
-            host = self.api.hosts.get(id=host.get_id())
-        if vm.get_status().get_state() != 'down':
-            vm.stop()
-            sleep(4)
-        if len(self.api.hosts.list()) == 1:
-            host = self.api.hosts.list()[0]
-        if host is None:
-            vm.set_start_paused(True)
-            vm.update()
-            sleep(2)
+        host = vm.get_host()
+        while host is None:
+            print "host is none"
+            if len(self.api.hosts.list()) == 1:
+                host = self.api.hosts.list()[0]
+                host = vm.get_host()
+                host = self.api.hosts.get(id=host.get_id())
+                continue
             vm.start()
+            sleep(4)
             vm = self.api.vms.get(name=vm.get_name())
-            while vm.get_status().get_state() != 'paused':
-                vm = self.api.vms.get(name=vm.get_name())
-                sleep(1)
             host = vm.get_host()
-            host = self.api.hosts.get(id=host.get_id())
+        host = self.api.hosts.get(id=host.get_id())
         try:
+            print "host is %s" % host.get_name()
             r_host = Host(host.get_address(), self.hypervisor_password)
         except Exception, e:
             print e
@@ -143,12 +139,11 @@ class Set(object):
             self.ini_host(host, os_dest, os_info)
         try:
             vm.stop()
-            sleep(2)
         except Exception:
             pass
-        vm.set_start_paused(False)
-        vm.update()
-        sleep(1)
+        while vm.get_status().get_state() != 'down':
+            vm = self.api.vms.get(name=vm.get_name())
+            sleep(1)
         return host
 
     def return_os_types(self):
@@ -177,14 +172,16 @@ class Set(object):
         ks_path = os_info['ks']
         ks_path = ks_path.replace(' ', '%20')
         os_dest = {'name': name, 'kernel': kernel, 'initrd': initrd}
+        print "preppering hypervisor for VM's os installation"
         host = self.select_host_on_cluster(vm, os_dest, os_info)
+        print "hypervisor preppered"
+        vm = self.api.vms.get(options.vm)
         network = params.Network(name=self.api.networks.list()[0].get_name())
         nic = params.NIC(name='eth0', network=network, interface='virtio')
         if len(vm.nics.list()) == 0:
             vm.nics.add(nic)
             vm.update()
             sleep(5)
-        vm = self.api.vms.get(options.vm)
         boot = params.Boot(dev='network')
         boot1 = params.Boot(dev='hd')
         str_vmlinuz = '-x86_64-vmlinuz'
@@ -197,7 +194,7 @@ class Set(object):
         cmdline += " loglevel=debug network kssendmac noverifyssl poweroff"
         os_ = params.OperatingSystem(cmdline=cmdline, boot=[boot, boot1],
                                      initrd=initrd, kernel=kernel)
-        vstart = params.VM(os=os_, run_once=True)
+        vstart = params.VM(os=os_, run_once=True, start_paused=False)
         action = params.Action(vm=vstart)
         vm.get_placement_policy().set_host(host)
         vm.set_run_once(True)
@@ -209,8 +206,10 @@ class Set(object):
             return 1
         Ref = os.fork()
         if Ref == 0:
-            self.engine_child(vm)
+            print "child %s" % Ref
+            sys.exit(self.engine_child(vm))
         else:
+            print "father %s" % Ref
             return 0
 
     def vm_state(self, options):

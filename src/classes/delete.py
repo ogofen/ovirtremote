@@ -14,8 +14,12 @@ class Delete(object):
             return self.domain
         if string == 'vm':
             return self.vm
+        if string == 'host':
+            return self.host
         if string == 'all_vms_and_disks':
             return self.all_vms_and_disks
+        if string == 'cluster':
+            return self.cluster
 
     def domain(self, options):
         """ removes a domain """
@@ -66,7 +70,7 @@ class Delete(object):
                     pass
 
     def vm(self, options):
-        """ removes a domain """
+        """ removes a vm """
 
         vm = self.api.vms.get(options.vm)
         if vm.get_status().get_state() != 'down':
@@ -76,6 +80,23 @@ class Delete(object):
             except Exception:
                 pass
         vm.delete()
+
+    def host(self, options):
+        """ removes a host """
+
+        host = self.api.hosts.get(options.host)
+        try:
+            host.deactivate()
+        except Exception:
+            pass
+            sleep(3)
+        host.delete()
+
+    def cluster(self, options):
+        """ removes a cluster """
+
+        cl = self.api.clusters.get(options.cluster)
+        cl.delete()
 
     def disk(self, options):
         """ removes a domain """

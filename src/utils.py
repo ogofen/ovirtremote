@@ -1,5 +1,4 @@
 from optparse import OptionParser
-import sys
 from configparser import SafeConfigParser
 
 
@@ -25,20 +24,24 @@ def parseOpt(argv):
     parser.add_option("--state", dest="state", default='1')
     parser.add_option("--size", dest="size", default='8')
     parser.add_option("--format", dest="format", default='cow')
+    parser.add_option("--dc_version", dest="version", default='-1')
     parser.add_option("--vm_address", dest="vm_address")
     parser.add_option("--diskname", dest="disk", default='disk')
     parser.add_option("--sparse", dest="sparse", default='True')
     parser.add_option("--bootable", dest="bootable", default='False')
     parser.add_option("--interface", dest="interface", default='virtio')
     parser.add_option("--host", dest="host", default='-1')
+    parser.add_option("--hostname", dest="host", default='-1')
     parser.add_option("--target", dest="target", default='-1')
     parser.add_option("--vmname", dest="vm", default='None')
     parser.add_option("--type", dest="type", default=None)
     parser.add_option("--os_type", dest="type", default=None)
     parser.add_option("--luns", dest="luns", default='-1')
     parser.add_option("--path", dest="path", default='-1')
-    parser.add_option("--datacenter", dest="datacenter", default='Default')
+    parser.add_option("--datacenter", dest="datacenter", default='')
+    parser.add_option("--datacentername", dest="datacenter", default='')
     parser.add_option("--cluster", dest="cluster", default='Default')
+    parser.add_option("--clustername", dest="cluster", default='')
     parser.add_option("--domainname", dest="domain")
     parser.add_option("--password", dest="password", default=-1)
     parser.add_option("--address", dest="address", default='-1')
@@ -68,6 +71,10 @@ def collect_params(setup):
     setup_dict = dict()
     try:
         setup_dict['url'] = parser.get(setup, 'url').encode('ascii')
+    except Exception:
+        pass
+    try:
+        setup_dict['cluster'] = parser.get(setup, 'cluster').encode('ascii')
     except Exception:
         pass
     try:

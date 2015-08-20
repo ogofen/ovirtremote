@@ -47,5 +47,4 @@ class ovirtremote(object):
         if exe_cmd is None:
             print "bad command or wrong syntax"
             return 1
-        exe_cmd(self.options)
-        return 0
+        sys.exit(exe_cmd(self.options))

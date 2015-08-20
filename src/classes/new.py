@@ -8,6 +8,7 @@ class New(object):
     def __init__(self, ovirtremote):
         self.api = ovirtremote.api
         self.options = ovirtremote.options
+        self.hypervisor_password = ovirtremote.setup['hypervisor_password']
 
     def get(self, string):
         if string == 'fcp-domain':
@@ -33,6 +34,12 @@ class New(object):
             return self.vm_and_bootable_disk
         if string == 'import_file':
             return self.importfile
+        if string == 'datacenter':
+            return self.datacenter
+        if string == 'cluster':
+            return self.cluster
+        if string == 'host':
+            return self.host
 
     def __str__(self):
         return "new"
@@ -42,6 +49,42 @@ class New(object):
         for host in self.api.hosts.list():
             if dc.clusters.get(id=host.get_cluster().get_id()) is not None:
                 return dc, host
+
+    def host(self, options):
+        """ new host"""
+        if options.address == '-1':
+            host_dict = collect_params(options.host)
+            options.address = host_dict['address']
+            options.cluster = host_dict['cluster']
+        cl = self.api.clusters.get(options.cluster)
+        host = params.Host(name=options.host, address=options.address,
+                           cluster=cl, root_password=self.hypervisor_password)
+        self.api.hosts.add(host)
+
+    def cluster(self, options):
+        """ new cluster """
+        dc = self.api.datacenters.get(options.datacenter)
+        ver = dc.get_version()
+        cpu = params.CPU(id='Intel Conroe Family', architecture='X86_64')
+        cl = params.Cluster(name=options.cluster, version=ver, data_center=dc,
+                            cpu=cpu)
+        self.api.clusters.add(cl)
+
+    def datacenter(self, options):
+        """ new datacenter """
+        ver = self.api.datacenters.get('Default').get_version()
+        if options.version != '-1':
+            if len(options.version) == 3:
+                vers = options.version
+                ver.set_major(int(vers[0]))
+                ver.set_minor(int(vers[2]))
+            else:
+                print "wrong input for dc_version"
+                return 1
+
+        dc = params.DataCenter(name=options.datacenter, version=ver,
+                               local=False)
+        self.api.datacenters.add(dc)
 
     def blockdomain(self, options):
         """ lets create an iSCSI domain """
@@ -141,6 +184,7 @@ class New(object):
     def vm_and_bootable_disk(self, options):
         self.vm(options)
         options.disk = options.vm + "_Disk_1"
+        options.bootable = True
         self.disk(options)
         sleep(5)
         sd = self.api.storagedomains.get(options.domain)
