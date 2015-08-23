@@ -89,6 +89,7 @@ class Set(object):
             except Exception, e:
                 print e
         if options.state == 'unattached':
+            sd.deactivate()
             while sd.get_status().get_state() != 'maintenance':
                 sleep(2)
                 sd = dc.storagedomains.get(options.domain)

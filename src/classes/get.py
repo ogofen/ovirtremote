@@ -176,7 +176,6 @@ class Get(object):
         except Exception, e:
             print "Vm is running on %s, paramiko failed to return os" % (ip)
             write_object_to_file(path, ip)
-            print e
             return e
         os_info = r_vm.return_os()
         print "VM \"%s\" is running %s %s on address: %s" % (vm.get_name(),
