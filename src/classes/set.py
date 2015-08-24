@@ -195,10 +195,9 @@ class Set(object):
         cmdline += " loglevel=debug network kssendmac noverifyssl poweroff"
         os_ = params.OperatingSystem(cmdline=cmdline, boot=[boot, boot1],
                                      initrd=initrd, kernel=kernel)
-        vstart = params.VM(os=os_, run_once=True, start_paused=False)
+        vstart = params.VM(os=os_)
         action = params.Action(vm=vstart)
         vm.get_placement_policy().set_host(host)
-        vm.set_run_once(True)
         vm.update()
         try:
             vm.start(action)

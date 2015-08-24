@@ -7,7 +7,7 @@ then
   cat $path/ovirtremote/help.txt 
   exit 0
 fi
-if [ -z $1 ] | [ -z $2 ] | [ -z $3 ]
+if [ -z $1 ] | [ -z $2 ]
 then
   echo "misuse of ovirt-remote tool, please refer to README file"
   exit 1
