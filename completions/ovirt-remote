@@ -6,7 +6,7 @@ _ovirt-remote()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     command="${COMP_WORDS[3]}"
-    opts="new get delete set"
+    opts="new get delete set start_bpython"
     args="--datacenter --vmname --datacenter --luns --address --path --host --domainname"
     case "${prev}" in
     ovirt-remote)
@@ -15,6 +15,9 @@ _ovirt-remote()
       ;;
 	  new)
       COMPREPLY=( $(compgen -W "vm iscsi-domain cluster fcp-domain host datacenter vm_and_bootable_disk nfs-domain openstack_volume_provider disk direct_lun iso_domain" ${cur}) )
+      return 0
+      ;;
+	  start_bpython)
       return 0
       ;;
 	  set)
