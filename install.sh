@@ -74,7 +74,7 @@ source /etc/bash_completion.d/ovirt-remote
 if ! [ -d $sudo_user_path/.ovirt-remote ]
 then
   mkdir $sudo_user_path/.ovirt-remote
-  chown $SUDO_USER:$SUDO_USER $sudo_user_path/.ovirt-remote 
+  chown -R $SUDO_USER:$SUDO_USER $sudo_user_path/.ovirt-remote 
 fi
 cd dhcp_test
 make
