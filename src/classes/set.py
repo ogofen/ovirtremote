@@ -120,8 +120,6 @@ class Set(object):
             print "host is none"
             if len(self.api.hosts.list()) == 1:
                 host = self.api.hosts.list()[0]
-                host = vm.get_host()
-                host = self.api.hosts.get(id=host.get_id())
                 continue
             vm.start()
             sleep(4)
