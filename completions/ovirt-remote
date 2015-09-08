@@ -32,10 +32,6 @@ _ovirt-remote()
       COMPREPLY=( $(compgen -W "--vmname --cluster" -- ${cur}) )
       return 0
       ;;
-    nfs-domain)
-      COMPREPLY=( $(compgen -W "--domainname --datacenter --address --path" -- ${cur}) )
-      return 0
-      ;;
     openstack_volume_provider)
       COMPREPLY=( $(compgen -W "--datacenter" -- ${cur}) )
       return 0
@@ -172,6 +168,10 @@ _ovirt-remote()
       COMPREPLY=( $(compgen -W "--cluster --hostname --address" -- ${cur}) )
       return 0
       ;;
+    nfs-domain)
+      COMPREPLY=( $(compgen -W "--domainname --datacenter --address --path" -- ${cur}) )
+      return 0
+      ;;
     datacenter)
       COMPREPLY=( $(compgen -W "--datacentername --dc_version" -- ${cur}) )
       return 0
@@ -217,6 +217,10 @@ _ovirt-remote()
         COMPREPLY=( $(compgen -W "--datacenter" -- ${cur}) )
         return 0
         ;;
+      domain)
+        COMPREPLY=( $(compgen -W "--domainname" -- ${cur}) )
+        return 0
+        ;;
       iqns_discovery)
         COMPREPLY=( $(compgen -W "--host --address" -- ${cur}) )
         return 0
@@ -249,16 +253,8 @@ _ovirt-remote()
         COMPREPLY=( $(compgen -W "--vm_address --password" -- ${cur}) )
         return 0
         ;;
-      nfs-domain)
-        COMPREPLY=( $(compgen -W "--domainname --datacenter --address --path" -- ${cur}) )
-        return 0
-        ;;
       available_luns_list)
         COMPREPLY=( $(compgen -W "--host" -- ${cur}) )
-        return 0
-        ;;
-      domain)
-        COMPREPLY=( $(compgen -W "--domainname" -- ${cur}) )
         return 0
         ;;
       ovirt-remote)

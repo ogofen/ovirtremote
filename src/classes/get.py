@@ -1,4 +1,5 @@
 from tabulate import tabulate
+import pudb
 from utils import write_object_to_file
 from hosts import Host
 from ovirtsdk.xml import params
@@ -49,19 +50,37 @@ class Get(object):
                     self.ini_host(host)
                 return host
 
+    def get_unregistered(self, host, storage_list):
+        used = list()
+        unregistered = list()
+        for storage in storage_list:
+            l = storage.get_logical_unit()[0]
+            if l.get_address() is not None:
+                if l.get_address() not in used:
+                    used.append(l.get_address())
+                    iscsi = params.IscsiDetails(address=l.get_address())
+                    target = [l.get_target()]
+                    ac = params.Action(iscsi=iscsi, iscsi_target=target)
+                    sds = host.unregisteredstoragedomainsdiscover(action=ac)
+                    sd = sds.get_storage_domains().get_storage_domain()
+                    unregistered.extend(sd)
+        sds = host.unregisteredstoragedomainsdiscover()
+        sd = sds.get_storage_domains().get_storage_domain()
+        unregistered.extend(sd)
+        return unregistered
+
     def Available_luns_list(self, options):
-        path = "%s/luns_id" % self.path
-        luns_id = ''
         if '-1' not in options.host:
             h1 = self.api.hosts.get(options.host)
         else:
             h1 = self.api.hosts.list()[0]
+        path = "%s/luns_id" % self.path
         storage_list = h1.storage.list()
+        vg_uuid_list = list()
         luns_info_list = list()
-        lun_id_list = list()
         for storage_ in storage_list:
-            lun_info = list()
-            lun_info.append(storage_.get_id())
+            lun_info = [storage_.get_id(),
+                        storage_.get_logical_unit()[0].get_volume_group_id()]
             lun_info.append(storage_.get_type())
             state = storage_.get_logical_unit()[0].get_status()
             size = storage_.get_logical_unit()[0].get_size()/pow(1024, 3)
@@ -69,45 +88,65 @@ class Get(object):
                 vendor = storage_.get_logical_unit()[0].get_vendor_id()
             except Exception:
                 vendor = "not specified"
-            lun_info.append(state)
-            lun_info.append(size)
-            lun_info.append(vendor)
-            luns_info_list.append(lun_info)
+            lun_info += [state, size, vendor]
+            luns_info_list += [lun_info]
 
         if luns_info_list == []:
             print "no luns available on host"
             return 0
-
-        print "host %s" % (h1.get_name())
-        table = tabulate(luns_info_list, ["id", "type", "status", "size",
-                                          "vendor"])
+        table = tabulate(luns_info_list, ["id", "vg_id", "type", "status",
+                                          "size", "vendor"])
         title = table.find(luns_info_list[0][0])
-        for domain in self.api.storagedomains.list():
+        sdomains = self.api.storagedomains.list()
+        unsdomains = self.get_unregistered(h1, storage_list)
+        for domain in sdomains:
             if self.is_block(domain.get_storage().get_type()):
-                print domain.get_name()
+                print '%s' % domain.get_name()
                 print '-----------'
-                print table[0:title-1]
+                print table[0:title-1],
+                print_flag = True
+                tmp_table = table[title-1:]
                 vg = domain.get_storage().get_volume_group()
-                for lun in vg.get_logical_unit():
-                    lun_id_list.append(lun.get_id())
-                    start = table.find(lun.get_id())
-                    end = start + table[start:].find('\n')
-                    if end > start:
-                        print table[start:end]
-                    elif start == -1:
-                        print "-- host can't \"see\" LUN --"
-                    else:
-                        print table[start:]
-                print ''
-            else:
-                continue
+                vg_uuid_list.append(vg.get_id())
+                offset = tmp_table.find(vg.get_id())
+                while offset != -1:
+                    start = tmp_table[:offset].rfind('\n')
+                    end = offset + tmp_table[offset:].find('\n')
+                    if offset-1 == end:
+                        print tmp_table[start:]
+                        break
+                    print tmp_table[start:end],
+                    tmp_table = tmp_table[end:]
+                    offset = tmp_table.find(vg.get_id())
+                print '\n'
+        if print_flag is True:
+            print ''
+
+        for domain in unsdomains:
+            print "\n%s (unregistered)" % domain.get_name()
+            print '-----------'
+            print table[0:title-1],
+            tmp_table = table[title-1:]
+            vg = domain.get_storage().get_volume_group()
+            vg_uuid_list.append(vg.get_id())
+            offset = tmp_table.find(vg.get_id())
+            while offset != -1:
+                start = tmp_table[:offset].rfind('\n')
+                end = offset + tmp_table[offset:].find('\n')
+                if offset-1 == end:
+                    print tmp_table[start:]
+                    break
+                print tmp_table[start:end],
+                tmp_table = tmp_table[end:]
+                offset = tmp_table.find(vg.get_id())
+            print ''
+
+        lun_id_list = list()
         for disk in self.api.disks.list():
             lun = disk.get_lun_storage()
             if lun is not None:
-                lun_id_list.append(lun.get_id())
-                print ''
-                print 'Direct Lun Disk %s' % (disk.get_name())
-                print '-------------------'
+                lun_id_list += [lun.get_id()]
+                print '\ndirect lun disk: %s' % disk.get_name()
                 print table[0:title-1]
                 start = table.find(lun.get_id())
                 end = start + table[start:].find('\n')
@@ -122,10 +161,14 @@ class Get(object):
         print 'Available Luns'
         print '----------------'
         print table[0:title-1]
+        luns_id = ''
+        used = lun_id_list + vg_uuid_list
         for storage_ in storage_list:
-            if storage_.get_id() not in lun_id_list:
-                start = table.find(storage_.get_id())
-                luns_id += ''.join(storage_.get_id()+' ')
+            id = storage_.get_id()
+            vg_uuid = storage_.get_logical_unit()[0].get_volume_group_id()
+            if id not in used and vg_uuid not in used:
+                start = table.find(id)
+                luns_id += ''.join(id + ' ')
                 end = start + table[start:].find('\n')
                 if end > start:
                     print table[start:end]
