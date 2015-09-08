@@ -267,12 +267,12 @@ class Set(object):
         """ stop or start a vm """
 
         h1 = self.api.hosts.get(options.host)
-        if options.state == 'start':
+        if options.state == 'up':
             try:
                 h1.activate()
             except Exception, e:
                 print e
-        else:
+        elif options.state == 'maintenance':
             try:
                 h1.deactivate()
             except Exception, e:

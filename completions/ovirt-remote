@@ -123,39 +123,43 @@ _ovirt-remote()
     --datacenter)
       COMPREPLY=( $(compgen -W "$dc_names" -- ${cur}) )
       return 0
-        ;;
+      ;;
     --vmname)
       COMPREPLY=( $(compgen -W "$vm_names" -- ${cur}) )
       return 0
-        ;;
+      ;;
     --domainname)
       COMPREPLY=( $(compgen -W "$domain_names" -- ${cur}) )
       return 0
-        ;;
+      ;;
     --os_type)
       COMPREPLY=( $(compgen -W "$os_types" -- ${cur}) )
       return 0
-        ;;
+      ;;
     --luns)
       COMPREPLY=( $(compgen -W "$luns_id" ${cur}) )
       return 0
-        ;;
+      ;;
     [0-9]*, )
       COMPREPLY=( $(compgen -W "$luns_id" -- ${cur}) )
       return 0
-        ;;
+      ;;
     --cluster)
       COMPREPLY=( $(compgen -W "$cluster_names" -- ${cur}) )
       return 0
-        ;;
+      ;;
     --host)
       COMPREPLY=( $(compgen -W "$hosts_names" -- ${cur}) )
       return 0
-        ;;
+      ;;
     --hostname)
       COMPREPLY=( $(compgen -W "$hosts_names" -- ${cur}) )
       return 0
-        ;;
+      ;;
+    --state)
+      COMPREPLY=( $(compgen -W "up maintenance" -- ${cur}) )
+      return 0
+      ;;
     --vm_address)
       COMPREPLY=( $(compgen -W "$vm_address" -- ${cur}) )
       return 0
