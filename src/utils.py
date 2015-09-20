@@ -2,17 +2,6 @@ from optparse import OptionParser
 from configparser import SafeConfigParser
 
 
-def pull_sanity_options(file):
-    options = dict()
-    i = 0
-    sanity_file = open(file, 'r')
-    for line in sanity_file.readlines():
-        (option, args) = parseOpt(line.split())
-        options[option.domain] = option
-        i = i + 1
-    return options
-
-
 def write_object_to_file(path, obj):
     file = open(path, 'w')
     file.write(obj)

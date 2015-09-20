@@ -15,10 +15,7 @@ class ovirtremote(object):
             sys.exit(1)
         argv = args[0]
         (self.options, args) = parseOpt(argv)
-        if argv[1] == 'root':
-            self.path = "/"+argv[1]+"/.ovirt-remote"
-        else:
-            self.path = "/home/"+argv[1]+"/.ovirt-remote"
+        self.path = "/etc/ovirt-remote"
         self.setup = collect_params(argv[2])
         try:
             self.api = API(url=self.setup['url'],
@@ -48,3 +45,8 @@ class ovirtremote(object):
             print "bad command or wrong syntax"
             return 1
         sys.exit(exe_cmd())
+
+    def write_object_to_file(path, obj):
+        file = open(path, 'w')
+        file.write(obj)
+        file.close()

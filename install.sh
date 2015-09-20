@@ -2,12 +2,7 @@
 
 pythonRPM=`rpm -qa | grep ^python-2`
 path=/usr/lib/${pythonRPM:0:6}${pythonRPM:7:3}/site-packages
-sudo_user_path=/home/$SUDO_USER
-if [ -z $SUDO_USER ]
-then
-  SUDO_USER=root
-  sudo_user_path=/$SUDO_USER
-fi
+sudo_user_path=/etc/ovirt-remote/
 is_sdk=`rpm -qa | grep "sdk-python"`
 if ! [ "$is_sdk" ]
 then
@@ -18,7 +13,6 @@ if ! [ "$is_gcc" ]
 then
   yum install gcc -y 
 fi
-
 is_pydevel=`rpm -qa | grep "python-devel"`
 if ! [ "$is_pydevel" ]
 then
@@ -61,7 +55,6 @@ then
   cp ovirt-remote.conf /etc/
 fi
 chmod +x bin/ovirt-remote
-
 cp bin/ovirt-remote /usr/bin/
 if [ -d /usr/share/zsh/site-functions/ ]
 then
@@ -71,13 +64,12 @@ cp completions/ovirt-remote /etc/bash_completion.d/
 cp completions/global_vars $sudo_user_path
 echo "source /etc/bash_completion.d/ovirt-remote" >> ~/.bashrc
 source /etc/bash_completion.d/ovirt-remote
-if ! [ -d $sudo_user_path/.ovirt-remote ]
+if ! [ -d $sudo_user_path ]
 then
-  mkdir $sudo_user_path/.ovirt-remote
-  chown -R $SUDO_USER:$SUDO_USER $sudo_user_path/.ovirt-remote 
+  mkdir $sudo_user_path
 fi
 cd dhcp_test
 make
 cd ..
-cp bin/* $sudo_user_path/.ovirt-remote/
+cp bin/* $sudo_user_path
 echo "installation successful"

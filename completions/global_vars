@@ -1,47 +1,47 @@
 setups=`sed 's/\[/''/g;s/\]/''/g' <<< $(cat /etc/ovirt-remote.conf | grep '\[')`
 export setups
-if [ -f  ~/.ovirt-remote/vm_names ]
+if [ -f  /tmp/vm_names ]
   then
-vm_names=`cat ~/.ovirt-remote/vm_names`
+vm_names=`cat /tmp/vm_names`
 export vm_names
 fi
-if [ -f  ~/.ovirt-remote/vm_address ]
+if [ -f  /tmp/vm_address ]
   then
-vm_address=`cat ~/.ovirt-remote/vm_address`
+vm_address=`cat /tmp/vm_address`
 export vm_address
 fi
-if [ -f  ~/.ovirt-remote/os_types ]
+if [ -f  /tmp/os_types ]
   then
-os_types=`cat ~/.ovirt-remote/os_types`
+os_types=`cat /tmp/os_types`
 export os_types
 fi
-if [ -f  ~/.ovirt-remote/hosts_names ]
+if [ -f  /tmp/hosts_names ]
   then
-hosts_names=`cat ~/.ovirt-remote/hosts_names`
+hosts_names=`cat /tmp/hosts_names`
 export hosts_names
 fi
-if [ -f  ~/.ovirt-remote/domain_names ]
+if [ -f  /tmp/domain_names ]
   then
-domain_names=`cat ~/.ovirt-remote/domain_names`
+domain_names=`cat /tmp/domain_names`
 export domain_names
 fi
-if [ -f  ~/.ovirt-remote/luns_id ]
+if [ -f  /tmp/luns_id ]
   then
-luns_id=`cat ~/.ovirt-remote/luns_id`
+luns_id=`cat /tmp/luns_id`
 export luns_id
 fi
-if [ -f  ~/.ovirt-remote/dc_names ]
+if [ -f  /tmp/dc_names ]
   then
-dc_names=`cat ~/.ovirt-remote/dc_names`
+dc_names=`cat /tmp/dc_names`
 export dc_names
 fi
-if [ -f  ~/.ovirt-remote/cluster_names ]
+if [ -f  /tmp/cluster_names ]
   then
-cluster_names=`cat ~/.ovirt-remote/cluster_names`
+cluster_names=`cat /tmp/cluster_names`
 export cluster_names
 fi
-if [ -f  ~/.ovirt-remote/os_types ]
+if [ -f  /tmp/os_types ]
   then
-os_types=`cat ~/.ovirt-remote/os_types`
+os_types=`cat /tmp/os_types`
 export os_types
 fi

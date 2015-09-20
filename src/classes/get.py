@@ -74,7 +74,7 @@ class Get(object):
             h1 = self.api.hosts.get(options.host)
         else:
             h1 = self.api.hosts.list()[0]
-        path = "%s/luns_id" % self.path
+        path = "%s/luns_id" % "/tmp"
         storage_list = h1.storage.list()
         vg_uuid_list = list()
         luns_info_list = list()
@@ -189,7 +189,7 @@ class Get(object):
 
     def vm_inquiry(self):
         options = self.options
-        path = "%s/vm_address" % (self.path)
+        path = "%s/vm_address" % ("/tmp")
         vm = self.api.vms.get(options.vm)
         if vm is None:
             print "No VM \"%s\" was found" % (options.vm)
@@ -216,9 +216,8 @@ class Get(object):
 
     def vmsinfo(self):
         """ list all VM's and their ips """
-        options = self.options
         vm_info = list()
-        path = "%s/vm_names" % (self.path)
+        path = "%s/vm_names" % ("/tmp")
         names = ''
         for VM in self.api.vms.list():
             ga = VM.get_guest_info()
@@ -246,7 +245,6 @@ class Get(object):
 
     def disksinfo(self):
         """ list all VM's and their ips """
-        options = self.options
         disk_info = list()
         for disk in self.api.disks.list():
             if disk.get_name() == 'OVF_STORE':
@@ -288,10 +286,9 @@ class Get(object):
 
     def hostsinfo(self):
         """ list all VM's and their ips """
-        options = self.options
         _hostsinfo = list()
         hosts_names = ''
-        path = "%s/hosts_names" % (self.path)
+        path = "%s/hosts_names" % ("/tmp")
 
         for host in self.api.hosts.list():
             tmp_host_info = list()
@@ -346,8 +343,8 @@ class Get(object):
         table = tabulate(dc_info, ["name", "cluster", "release", "id",
                                    "status"])
         print table
-        write_object_to_file('%s/dc_names' % self.path, dc_names)
-        write_object_to_file('%s/cluster_names' % self.path, cluster_names_)
+        write_object_to_file('%s/dc_names' % "/tmp", dc_names)
+        write_object_to_file('%s/cluster_names' % "/tmp", cluster_names_)
 
     def sdinfo(self):
         """ list all dc's and their info """
@@ -375,4 +372,4 @@ class Get(object):
         table = tabulate(sd_info, ["name", "type", "storage", "datacenter",
                                    "id", "status"])
         print table
-        write_object_to_file('%s/domain_names' % (self.path), domain_names)
+        write_object_to_file('%s/domain_names' % ("/tmp"), domain_names)
