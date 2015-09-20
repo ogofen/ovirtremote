@@ -1,5 +1,5 @@
 from ovirtsdk.xml import params
-from utils import get_sd_dc_objects, collect_params
+from ovirtremotesdk.utils import get_sd_dc_objects, collect_params
 from time import sleep
 
 
@@ -44,14 +44,17 @@ class New(object):
     def __str__(self):
         return "new"
 
-    def get_host_and_dc(self, options):
+    def get_host_and_dc(self):
+        options = self.options
         dc = self.api.datacenters.get(options.datacenter)
         for host in self.api.hosts.list():
             if dc.clusters.get(id=host.get_cluster().get_id()) is not None:
-                return dc, host
+                if host.get_status().get_state() == 'up':
+                    return dc, host
 
-    def host(self, options):
+    def host(self):
         """ new host"""
+        options = self.options
         if options.address == '-1':
             host_dict = collect_params(options.host)
             options.address = host_dict['address']
@@ -61,8 +64,9 @@ class New(object):
                            cluster=cl, root_password=self.hypervisor_password)
         self.api.hosts.add(host)
 
-    def cluster(self, options):
+    def cluster(self):
         """ new cluster """
+        options = self.options
         dc = self.api.datacenters.get(options.datacenter)
         ver = dc.get_version()
         cpu = params.CPU(id='Intel Conroe Family', architecture='X86_64')
@@ -70,8 +74,9 @@ class New(object):
                             cpu=cpu)
         self.api.clusters.add(cl)
 
-    def datacenter(self, options):
+    def datacenter(self):
         """ new datacenter """
+        options = self.options
         ver = self.api.datacenters.get('Default').get_version()
         if options.version != '-1':
             if len(options.version) == 3:
@@ -86,9 +91,10 @@ class New(object):
                                local=False)
         self.api.datacenters.add(dc)
 
-    def blockdomain(self, options):
+    def blockdomain(self):
         """ lets create an iSCSI domain """
 
+        options = self.options
         if '-1' not in options.host:
             host1 = self.api.hosts.get(options.host)
         else:
@@ -115,7 +121,8 @@ class New(object):
         newsd = self.api.storagedomains.add(sd)
         dc.storagedomains.add(newsd)
 
-    def iso_domain(self, options):
+    def iso_domain(self):
+        options = self.options
         with open('/etc/ovirt-remote.conf', 'r') as f:
             line = f.readline()
             line = f.readline()
@@ -127,9 +134,9 @@ class New(object):
         options.domain = 'iso-domain'
         self.filedomain(options)
 
-    def direct_lun(self, options):
+    def direct_lun(self):
         """ create a new dlun """
-
+        options = self.options
         luns = list()
         storage_connections = self.api.storageconnections.list()
         for connection in storage_connections:
@@ -146,9 +153,10 @@ class New(object):
         disk.set_lun_storage(storage)
         self.api.disks.add(disk)
 
-    def disk(self, options):
+    def disk(self):
         """ create a new Vdisk """
 
+        options = self.options
         (sd, dc) = get_sd_dc_objects(self.api, options)
         dc = self.api.datacenters.get(id=dc.get_id())
         sd = dc.storagedomains.get(options.domain)
@@ -165,10 +173,11 @@ class New(object):
         self.api.disks.add(disk)
         sleep(5)
 
-    def vm(self, options):
+    def vm(self):
         """	Build a connection string from a dictionary of parameters.Returns
         string."""
 
+        options = self.options
         cluster = self.api.clusters.get(options.cluster)
         vm_name = options.vm
         network = params.Network(name=self.api.networks.list()[0].get_name())
@@ -181,11 +190,13 @@ class New(object):
         vm.update()
         return 0
 
-    def vm_and_bootable_disk(self, options):
-        self.vm(options)
+    def vm_and_bootable_disk(self):
+        options = self.options
         options.disk = options.vm + "_Disk_1"
         options.bootable = True
-        self.disk(options)
+        self.vm()
+        self.options = options
+        self.disk()
         sleep(5)
         sd = self.api.storagedomains.get(options.domain)
         vm = self.api.vms.get(options.vm)
@@ -195,7 +206,8 @@ class New(object):
         disk = vm.disks.get(disk.get_name())
         disk.activate()
 
-    def importfile(self, options):
+    def importfile(self):
+        options = self.options
         if '-1' not in options.host:
             host1 = self.api.hosts.get(options.host)
         else:
@@ -211,11 +223,9 @@ class New(object):
         except Exception, e:
             print e
 
-    def filedomain(self, options):
-        if '-1' not in options.host:
-            host1 = self.api.hosts.get(options.host)
-        else:
-            (dc, host1) = self.get_host_and_dc(options)
+    def filedomain(self):
+        options = self.options
+        (dc, host1) = self.get_host_and_dc()
         if options.type == 'nfs':
             _type = 'data'
         else:
@@ -236,9 +246,10 @@ class New(object):
         except Exception, e:
             print e
 
-    def openstack_volume_provider(self, options):
+    def openstack_volume_provider(self):
         """ add cinder domain """
 
+        options = self.options
         dc = self.api.datacenters.get(options.datacenter)
         cinder = collect_params('openstack_volume_provider')
         cinder_sd = params.OpenStackVolumeProvider

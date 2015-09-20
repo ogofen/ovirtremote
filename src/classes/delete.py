@@ -1,10 +1,11 @@
 from time import sleep
-from utils import get_sd_dc_objects
+from ovirtremotesdk.utils import get_sd_dc_objects
 
 
 class Delete(object):
-    def __init__(self, api):
-        self.api = api
+    def __init__(self, ovirtremote):
+        self.api = ovirtremote.api
+        self.options = ovirtremote.options
 
     def __str__(self):
         return "delete"
@@ -21,9 +22,10 @@ class Delete(object):
         if string == 'cluster':
             return self.cluster
 
-    def domain(self, options):
+    def domain(self):
         """ removes a domain """
 
+        options = self.options
         (sd, dc) = get_sd_dc_objects(self.api, options)
         if sd is None:
             print "storage domain wasn't found"
@@ -52,7 +54,7 @@ class Delete(object):
         sd_no_dc.delete(sd_no_dc)
         return 0
 
-    def all_vms_and_disks(self, options):
+    def all_vms_and_disks(self):
         for vm in self.api.vms.list():
             try:
                 vm.stop()
@@ -69,9 +71,10 @@ class Delete(object):
                 except Exception:
                     pass
 
-    def vm(self, options):
+    def vm(self):
         """ removes a vm """
 
+        options = self.options
         vm = self.api.vms.get(options.vm)
         if vm.get_status().get_state() != 'down':
             try:
@@ -81,25 +84,28 @@ class Delete(object):
                 pass
         vm.delete()
 
-    def host(self, options):
+    def host(self):
         """ removes a host """
 
+        options = self.options
         host = self.api.hosts.get(options.host)
         try:
             host.deactivate()
         except Exception:
             pass
-            sleep(3)
+        sleep(3)
         host.delete()
 
-    def cluster(self, options):
+    def cluster(self):
         """ removes a cluster """
 
+        options = self.options
         cl = self.api.clusters.get(options.cluster)
         cl.delete()
 
-    def disk(self, options):
+    def disk(self):
         """ removes a domain """
 
+        options = self.options
         disk = self.api.disks.get(options.disk)
         disk.delete()

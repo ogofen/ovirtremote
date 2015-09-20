@@ -1,6 +1,5 @@
 from tabulate import tabulate
-import pudb
-from utils import write_object_to_file
+from ovirtremotesdk.utils import write_object_to_file
 from hosts import Host
 from ovirtsdk.xml import params
 
@@ -69,7 +68,8 @@ class Get(object):
         unregistered.extend(sd)
         return unregistered
 
-    def Available_luns_list(self, options):
+    def Available_luns_list(self):
+        options = self.options
         if '-1' not in options.host:
             h1 = self.api.hosts.get(options.host)
         else:
@@ -176,20 +176,6 @@ class Get(object):
                     print table[start:]
         write_object_to_file(path, luns_id)
 
-    def vm_ip(self, options, hostname):
-        vm = self.api.vms.get(options.vm)
-        host = self.api.hosts.get(hostname)
-        mac = vm.nics.list()[0].get_mac().get_address()
-        bridge = self.api.networks.list()[0].get_name()
-        try:
-            r_host = Host(host.get_address(), self.hypervisor_password)
-        except Exception, e:
-            return e
-        cmd = '/give_mac_return_ip -m %s -i %s' % (mac, bridge)
-        out = r_host.run_bash_command(cmd)
-        r_host.__del__()
-        return out[out.find('Acquired IP:')+13:].rstrip()
-
     def ini_host(self, host):
         remote_host = Host(host.get_address(), self.hypervisor_password)
         src_1 = "%s/give_mac_return_ip" % (self.path)
@@ -201,7 +187,8 @@ class Get(object):
             print e
         remote_host.__del__()
 
-    def vm_inquiry(self, options):
+    def vm_inquiry(self):
+        options = self.options
         path = "%s/vm_address" % (self.path)
         vm = self.api.vms.get(options.vm)
         if vm is None:
@@ -227,8 +214,9 @@ class Get(object):
         write_object_to_file(path, ip)
         r_vm.__del__()
 
-    def vmsinfo(self, options):
+    def vmsinfo(self):
         """ list all VM's and their ips """
+        options = self.options
         vm_info = list()
         path = "%s/vm_names" % (self.path)
         names = ''
@@ -256,8 +244,9 @@ class Get(object):
         table = tabulate(vm_info, ["name", "ip", "id", "mac address", "state"])
         print table
 
-    def disksinfo(self, options):
+    def disksinfo(self):
         """ list all VM's and their ips """
+        options = self.options
         disk_info = list()
         for disk in self.api.disks.list():
             if disk.get_name() == 'OVF_STORE':
@@ -297,8 +286,9 @@ class Get(object):
                                      "is_bootable", "domain", "vm"])
         print table
 
-    def hostsinfo(self, options):
+    def hostsinfo(self):
         """ list all VM's and their ips """
+        options = self.options
         _hostsinfo = list()
         hosts_names = ''
         path = "%s/hosts_names" % (self.path)
@@ -322,8 +312,9 @@ class Get(object):
                          ["name", "address", "id", "state", "cluster"])
         print table
 
-    def showiqn(self, options):
+    def showiqn(self):
         """ list all host's iqns """
+        options = self.options
         if '-1' not in options.host:
             h1 = self.api.hosts.get(options.host)
         else:
@@ -335,7 +326,7 @@ class Get(object):
         for iqn in iqns.get_iscsi_target():
             print iqn
 
-    def dcinfo(self, options):
+    def dcinfo(self):
         """ list all dc's and their info """
         dc_info = list()
         dc_names = ''
@@ -358,7 +349,7 @@ class Get(object):
         write_object_to_file('%s/dc_names' % self.path, dc_names)
         write_object_to_file('%s/cluster_names' % self.path, cluster_names_)
 
-    def sdinfo(self, options):
+    def sdinfo(self):
         """ list all dc's and their info """
         sd_info = list()
         domain_names = ''

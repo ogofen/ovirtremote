@@ -2,8 +2,8 @@ from time import sleep
 import sys
 import os
 from configparser import SafeConfigParser
-from hosts import Host
-from utils import get_sd_dc_objects, write_object_to_file
+from ovirtremotesdk.classes.hosts import Host
+from ovirtremotesdk.utils import get_sd_dc_objects, write_object_to_file
 from ovirtsdk.xml import params
 
 
@@ -21,6 +21,7 @@ class Set(object):
         self.path = ovirtremote.path
         self.hypervisor_password = self.setup['hypervisor_password']
         self.image_path = ovirtremote.image_path
+        self.options = ovirtremote.options
 
     def is_block(self, type_):
         if 'iscsi' in type_ or 'fcp' in type_:
@@ -79,30 +80,31 @@ class Set(object):
         except Exception:
             return 1
 
-    def domain_state(self, options):
+    def domain_state(self):
         """ change domain's mode to maintainance or detach or activate """
-
+        options = self.options
         (sd, dc) = get_sd_dc_objects(self.api, options)
         if options.state == 'maintenance':
             try:
                 sd.deactivate()
             except Exception, e:
                 print e
-        if options.state == 'unattached':
+        elif options.state == 'unattached':
             sd.deactivate()
             while sd.get_status().get_state() != 'maintenance':
                 sleep(2)
                 sd = dc.storagedomains.get(options.domain)
             sd.delete()
-        elif options.state == 'active':
-            dc.storagedomains.add(sd)
+        elif options.state == 'up':
+            sd.activate()
         else:
             print "operation Failed, option: \"--state\" is needed" \
                 "(maintenance, unattached, active)"
             return 1
         return 0
 
-    def attach_disk(self, options):
+    def attach_disk(self):
+        options = self.options
         vm = self.api.vms.get(options.vm)
         if vm is None:
             print "VM %s was not found" % (options.vm)
@@ -155,7 +157,8 @@ class Set(object):
         write_object_to_file(path, os_types)
         return os_types.replace(' ', '\n')
 
-    def operating_system(self, options):
+    def operating_system(self):
+        options = self.options
         vm = self.api.vms.get(options.vm)
         name = options.type
         os_info = self.collect_os(options.type)
@@ -210,9 +213,10 @@ class Set(object):
             print "father %s" % Ref
             return 0
 
-    def vm_state(self, options):
+    def vm_state(self):
         """ stop or start a vm """
 
+        options = self.options
         vm = self.api.vms.get(options.vm)
         if options.state == 'up':
             try:
@@ -225,8 +229,9 @@ class Set(object):
             except Exception, e:
                 print e
 
-    def iscsilogin(self, options):
+    def iscsilogin(self):
         """ login to iscsi session """
+        options = self.options
         if '-1' not in options.host:
             h1 = self.api.hosts.get(options.host)
         else:
@@ -244,8 +249,9 @@ class Set(object):
             remote_host.wget_file(os_dest['initrd'], os_info['initrd'])
             sleep(5)
 
-    def guestagent(self, options):
+    def guestagent(self):
         """ install guestagent on a vm """
+        options = self.options
         ip = options.vm_address
         try:
             paramiko_vm = Host(ip, options.password)
@@ -263,9 +269,10 @@ class Set(object):
         print "guestagent has been deployed"
         return 0
 
-    def host_state(self, options):
+    def host_state(self):
         """ stop or start a vm """
 
+        options = self.options
         h1 = self.api.hosts.get(options.host)
         if options.state == 'up':
             try:

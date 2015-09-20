@@ -51,11 +51,11 @@ then
   pip install configparser
 fi
 
-if ! [ -d $path/ovirtremote ]
+if ! [ -d $path/ovirtremotesdk ]
 then
-  mkdir $path/ovirtremote
+  mkdir $path/ovirtremotesdk
 fi
-cp -r src/* $path/ovirtremote/
+cp -r src/* $path/ovirtremotesdk/
 if ! [ -f /etc/ovirt-remote.conf ]
 then
   cp ovirt-remote.conf /etc/

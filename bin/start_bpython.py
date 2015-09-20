@@ -1,6 +1,5 @@
 from ovirtsdk.api import API
-from ovirtremote.utils import collect_params
-from ovirtsdk.xml import params
+from ovirtremotesdk.utils import collect_params
 import sys
 
 if len(sys.argv) > 1:
