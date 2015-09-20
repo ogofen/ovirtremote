@@ -187,6 +187,19 @@ class Get(object):
             print e
         remote_host.__del__()
 
+    def vm_ip(self, options, hostname):
+        vm = self.api.vms.get(options.vm)
+        host = self.api.hosts.get(hostname)
+        mac = vm.nics.list()[0].get_mac().get_address()
+        bridge = self.api.networks.list()[0].get_name()
+        try:
+            r_host = Host(host.get_address(), self.hypervisor_password)
+        except Exception, e:
+            return e
+        cmd = '/give_mac_return_ip -m %s -i %s' % (mac, bridge)
+        out = r_host.run_bash_command(cmd)
+        return out[out.find('Acquired IP:')+13:].rstrip()
+
     def vm_inquiry(self):
         options = self.options
         path = "%s/vm_address" % ("/tmp")
