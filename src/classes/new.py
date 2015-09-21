@@ -7,132 +7,124 @@ class New(object):
 
     def __init__(self, ovirtremote):
         self.api = ovirtremote.api
-        self.options = ovirtremote.options
         self.hypervisor_password = ovirtremote.setup['hypervisor_password']
 
-    def get(self, string):
+    def exec_cmd(self, string, options):
         if string == 'fcp-domain':
-            self.options.type = 'fcp'
-            return self.blockdomain
+            return self.blockdomain(options.domain, 'fcp',
+                                    options.datacenter, options.luns)
         if string == 'iscsi-domain':
-            self.options.type = 'iscsi'
-            return self.blockdomain
+            return self.blockdomain(options.domain, 'iscsi',
+                                    options.datacenter, options.luns)
         if string == 'nfs-domain':
-            self.options.type = 'nfs'
-            return self.filedomain
+            return self.filedomain(options.domain, 'nfs', options.datacenter,
+                                   options.address, options.path)
         if string == 'vm':
-            return self.vm
+            return self.vm(options.vm, options.cluster)
         if string == 'openstack_volume_provider':
-            return self.openstack_volume_provider
+            return self.openstack_volume_provider(options.datacenter)
         if string == 'disk':
-            return self.disk
+            return self.disk(options.disk, options.domain, options.bootable,
+                             options.type, options.size, options.sparse,
+                             options.format)
         if string == 'direct_lun':
             return self.direct_lun
         if string == 'iso_domain':
-            return self.iso_domain
+            return self.iso_domain(options.datacenter)
         if string == 'vm_and_bootable_disk':
-            return self.vm_and_bootable_disk
+            return self.vm_and_bootable_disk(options.vm, options.cluster)
         if string == 'import_file':
             return self.importfile
         if string == 'datacenter':
-            return self.datacenter
+            return self.datacenter(options.datacenter, options.version)
         if string == 'cluster':
-            return self.cluster
+            return self.cluster(options.cluster, options.datacenter)
         if string == 'host':
-            return self.host
+            return self.host(options.host, options.address, options.password,
+                             options.cluster)
 
     def __str__(self):
         return "new"
 
-    def get_host_and_dc(self):
-        options = self.options
-        dc = self.api.datacenters.get(options.datacenter)
+    def get_host_and_dc(self, datacenter):
+        dc = self.api.datacenters.get(datacenter)
         for host in self.api.hosts.list():
             if dc.clusters.get(id=host.get_cluster().get_id()) is not None:
                 if host.get_status().get_state() == 'up':
                     return dc, host
 
-    def host(self):
+    def host(self, host_name, address=None, password=None, cluster=None):
         """ new host"""
-        options = self.options
-        if options.address == '-1':
-            host_dict = collect_params(options.host)
-            options.address = host_dict['address']
-            options.cluster = host_dict['cluster']
-        cl = self.api.clusters.get(options.cluster)
-        host = params.Host(name=options.host, address=options.address,
+        if address is None:
+            host_dict = collect_params(host_name)
+            address = host_dict['address']
+            cluster = host_dict['cluster']
+        cl = self.api.clusters.get(cluster)
+        host = params.Host(name=host_name, address=address,
                            cluster=cl, root_password=self.hypervisor_password)
         self.api.hosts.add(host)
 
-    def cluster(self):
+    def cluster(self, cluster, datacenter):
         """ new cluster """
-        options = self.options
-        dc = self.api.datacenters.get(options.datacenter)
+        dc = self.api.datacenters.get(datacenter)
         ver = dc.get_version()
         cpu = params.CPU(id='Intel Conroe Family', architecture='X86_64')
-        cl = params.Cluster(name=options.cluster, version=ver, data_center=dc,
+        cl = params.Cluster(name=cluster, version=ver, data_center=dc,
                             cpu=cpu)
         self.api.clusters.add(cl)
 
-    def datacenter(self):
+    def datacenter(self, datacenter, version):
         """ new datacenter """
-        options = self.options
         ver = self.api.datacenters.get('Default').get_version()
-        if options.version != '-1':
-            if len(options.version) == 3:
-                vers = options.version
+        if version is not None:
+            if len(version) == 3:
+                vers = version
                 ver.set_major(int(vers[0]))
                 ver.set_minor(int(vers[2]))
             else:
                 print "wrong input for dc_version"
                 return 1
 
-        dc = params.DataCenter(name=options.datacenter, version=ver,
+        dc = params.DataCenter(name=datacenter, version=ver,
                                local=False)
         self.api.datacenters.add(dc)
 
-    def blockdomain(self):
-        """ lets create an iSCSI domain """
+    def blockdomain(self, domain_name, type, datacenter=None, luns=None):
+        """ lets create an iSCSi or fcp domain """
 
-        options = self.options
-        if '-1' not in options.host:
-            host1 = self.api.hosts.get(options.host)
-        else:
-            (dc, host1) = self.get_host_and_dc(options)
-        if options.luns == '-1':
-            domain_dict = collect_params(options.domain)
-            options.luns = domain_dict['luns']
+        (dc, host1) = self.get_host_and_dc(datacenter)
+        if luns is None:
+            domain_dict = collect_params(domain_name)
+            luns = domain_dict['luns']
 
-        luns = list()
-        storage = params.Storage(type_=options.type,
+        storage = params.Storage(type_=type,
                                  volume_group=params.VolumeGroup(),
                                  override_luns='True')
-        sd = params.StorageDomain(name=options.domain, format='True',
+        sd = params.StorageDomain(name=domain_name, format='True',
                                   host=host1, type_='data',
                                   storage_format='v3')
-        lun = options.luns
+        luns_list = list()
+        lun = luns
         while ',' in lun:
             id = lun[0:lun.find(',')]
             lun = lun[lun.find(',')+1:]
-            luns.append(params.LogicalUnit(id=id))
-        luns.append(params.LogicalUnit(id=lun))
-        storage.set_logical_unit(luns)
+            luns_list.append(params.LogicalUnit(id=id))
+        luns_list.append(params.LogicalUnit(id=lun))
+        storage.set_logical_unit(luns_list)
         sd.set_storage(storage)
         newsd = self.api.storagedomains.add(sd)
         dc.storagedomains.add(newsd)
 
-    def iso_domain(self):
-        options = self.options
+    def iso_domain(self, datacenter, address, path, type):
         with open('/etc/ovirt-remote.conf', 'r') as f:
             line = f.readline()
             line = f.readline()
-            options.address = line[line.find('=')+1:-1]
+            address = line[line.find('=')+1:-1]
             line = f.readline()
-            options.path = line[line.find('=')+1:-1]
-        options.type = 'nfs'
-        options._type = 'iso'
-        options.domain = 'iso-domain'
-        self.filedomain(options)
+            path = line[line.find('=')+1:-1]
+        type = 'iso'
+        domain = 'iso-domain'
+        self.filedomain(domain, datacenter, address, path, type)
 
     def direct_lun(self):
         """ create a new dlun """
@@ -153,19 +145,19 @@ class New(object):
         disk.set_lun_storage(storage)
         self.api.disks.add(disk)
 
-    def disk(self):
+    def disk(self, disk_name, domain_name, bootable=False, size=8,
+             interface='virtio', sparse=True, format='raw'):
         """ create a new Vdisk """
 
-        options = self.options
-        (sd, dc) = get_sd_dc_objects(self.api, options)
+        (sd, dc) = get_sd_dc_objects(self.api, domain_name)
         dc = self.api.datacenters.get(id=dc.get_id())
-        sd = dc.storagedomains.get(options.domain)
-        size = int(options.size)*pow(1024, 3)
+        sd = dc.storagedomains.get(domain_name)
+        size = size*pow(1024, 3)
         disk = params.Disk(storage_domains=params.StorageDomains
                            (storage_domain=[sd]), size=size, type_='data',
-                           interface=options.interface, format=options.format,
-                           bootable=options.bootable, sparse=options.sparse,
-                           name=options.disk)
+                           interface=interface, format=format,
+                           bootable=bootable, sparse=sparse,
+                           name=disk_name)
         if sd.get_type() == 'volume':
             cinder = self.api.openstackvolumeproviders.get('cinder')
             vol_type = cinder.volumetypes.get('ceph')
@@ -173,13 +165,12 @@ class New(object):
         self.api.disks.add(disk)
         sleep(5)
 
-    def vm(self):
+    def vm(self, vm_name, cluster):
         """	Build a connection string from a dictionary of parameters.Returns
         string."""
 
-        options = self.options
-        cluster = self.api.clusters.get(options.cluster)
-        vm_name = options.vm
+        cluster = self.api.clusters.get(cluster)
+        vm_name = vm_name
         network = params.Network(name=self.api.networks.list()[0].get_name())
         nic = params.NIC(name='eth0', network=network, interface='virtio')
         vm = params.VM(name=vm_name, cluster=cluster,
@@ -190,18 +181,16 @@ class New(object):
         vm.update()
         return 0
 
-    def vm_and_bootable_disk(self):
-        options = self.options
-        options.disk = options.vm + "_Disk_1"
-        options.bootable = True
-        self.vm()
-        self.options = options
-        self.disk()
+    def vm_and_bootable_disk(self, vm_name, cluster, domain_name):
+        disk_name = vm_name + "_Disk_1"
+        bootable = True
+        self.vm(vm_name, cluster)
+        self.disk(disk_name, domain_name, bootable)
         sleep(5)
-        sd = self.api.storagedomains.get(options.domain)
-        vm = self.api.vms.get(options.vm)
-        disk = sd.disks.get(options.disk)
-        vm.disks.add(disk)
+        sd = self.api.storagedomains.get(domain_name)
+        vm = self.api.vms.get(vm_name)
+        disk = sd.disks.get(disk_name)
+        vm.disks.add(disk_name)
         sleep(2)
         disk = vm.disks.get(disk.get_name())
         disk.activate()
@@ -223,22 +212,22 @@ class New(object):
         except Exception, e:
             print e
 
-    def filedomain(self):
-        options = self.options
-        (dc, host1) = self.get_host_and_dc()
-        if options.type == 'nfs':
-            _type = 'data'
-        else:
+    def filedomain(self, domain_name, type, datacenter, address, path):
+        (dc, host1) = self.get_host_and_dc(datacenter)
+        if type == 'iso':
             _type = 'iso'
-        if options.address == '-1' and options.path == '-1':
-            domain_dict = collect_params(options.domain)
-            options.address = domain_dict['address']
-            options.path = domain_dict['path']
+            type = 'nfs'
+        else:
+            _type = 'data'
+        if address == '-1' and path == '-1':
+            domain_dict = collect_params(domain_name)
+            address = domain_dict['address']
+            path = domain_dict['path']
         _storage = params.Storage
-        storage = _storage(type_=options.type, address=options.address,
-                           path=options.path)
+        storage = _storage(type_=type, address=address,
+                           path=path)
         sd = params.StorageDomain(storage=storage, host=host1,
-                                  name=options.domain, data_center=dc,
+                                  name=domain_name, data_center=dc,
                                   type_=_type)
         newsd = self.api.storagedomains.add(sd)
         try:

@@ -5,28 +5,26 @@ from ovirtremotesdk.utils import get_sd_dc_objects
 class Delete(object):
     def __init__(self, ovirtremote):
         self.api = ovirtremote.api
-        self.options = ovirtremote.options
 
     def __str__(self):
         return "delete"
 
-    def get(self, string):
+    def exec_cmd(self, string, options):
         if string == 'domain':
-            return self.domain
-        if string == 'vm':
-            return self.vm
-        if string == 'host':
-            return self.host
-        if string == 'all_vms_and_disks':
-            return self.all_vms_and_disks
-        if string == 'cluster':
-            return self.cluster
+            return self.domain(options.domain)
+        elif string == 'vm':
+            return self.vm(options.vm)
+        elif string == 'host':
+            return self.host(options.host)
+        elif string == 'all_vms_and_disks':
+            return self.all_vms_and_disks()
+        elif string == 'cluster':
+            return self.cluster(options.cluster)
 
-    def domain(self):
+    def domain(self, domain_name):
         """ removes a domain """
 
-        options = self.options
-        (sd, dc) = get_sd_dc_objects(self.api, options)
+        (sd, dc) = get_sd_dc_objects(self.api, domain_name)
         if sd is None:
             print "storage domain wasn't found"
             return 1
@@ -37,10 +35,10 @@ class Delete(object):
                 print e
                 return 1
         if dc is not None:
-            sd_no_dc = self.api.storagedomains.get(options.domain)
+            sd_no_dc = self.api.storagedomains.get(domain_name)
             while sd.get_status().get_state() != 'maintenance':
                 sleep(2)
-                sd = dc.storagedomains.get(options.domain)
+                sd = dc.storagedomains.get(domain_name)
             sd.delete()
             sleep(10)
         for host in self.api.hosts.list():
@@ -71,11 +69,10 @@ class Delete(object):
                 except Exception:
                     pass
 
-    def vm(self):
+    def vm(self, vm_name):
         """ removes a vm """
 
-        options = self.options
-        vm = self.api.vms.get(options.vm)
+        vm = self.api.vms.get(vm_name)
         if vm.get_status().get_state() != 'down':
             try:
                 vm.stop()
@@ -84,11 +81,10 @@ class Delete(object):
                 pass
         vm.delete()
 
-    def host(self):
+    def host(self, host_name):
         """ removes a host """
 
-        options = self.options
-        host = self.api.hosts.get(options.host)
+        host = self.api.hosts.get(host_name)
         try:
             host.deactivate()
         except Exception:
@@ -96,16 +92,14 @@ class Delete(object):
         sleep(3)
         host.delete()
 
-    def cluster(self):
+    def cluster(self, cluster):
         """ removes a cluster """
 
-        options = self.options
-        cl = self.api.clusters.get(options.cluster)
+        cl = self.api.clusters.get(cluster)
         cl.delete()
 
-    def disk(self):
+    def disk(self, disk_name):
         """ removes a domain """
 
-        options = self.options
-        disk = self.api.disks.get(options.disk)
+        disk = self.api.disks.get(disk_name)
         disk.delete()

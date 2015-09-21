@@ -5,11 +5,14 @@ import re
 
 class Host(object):
     def __init__(self, address, psswd):
-        self.ssh = paramiko.SSHClient()
-        self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.ssh.connect(hostname=address,
-                         username='root',
-                         password=psswd, timeout=15)
+        try:
+            self.ssh = paramiko.SSHClient()
+            self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            self.ssh.connect(hostname=address,
+                             username='root',
+                             password=psswd, timeout=15)
+        except Exception, e:
+            return e
 
     def __del__(self):
         self.ssh.close()

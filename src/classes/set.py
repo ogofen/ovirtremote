@@ -21,7 +21,6 @@ class Set(object):
         self.path = ovirtremote.path
         self.hypervisor_password = self.setup['hypervisor_password']
         self.image_path = ovirtremote.image_path
-        self.options = ovirtremote.options
 
     def is_block(self, type_):
         if 'iscsi' in type_ or 'fcp' in type_:
@@ -43,21 +42,22 @@ class Set(object):
             return False
         return os_dict
 
-    def get(self, string):
+    def exec_cmd(self, string, options):
         if string == 'domain_state':
-            return self.domain_state
+            return self.domain_state(options.domain, options.state)
         if string == 'iscsi_login':
-            return self.iscsilogin
+            return self.iscsilogin(options.host, options.address,
+                                   options.target)
         if string == 'vm_state':
-            return self.vm_state
+            return self.vm_state(options.vm, options.state)
         if string == 'host_state':
-            return self.host_state
+            return self.host_state(options.host, options.state)
         if string == 'guestagent':
-            return self.guestagent
+            return self.guestagent(options.vm_address, options.password)
         if string == 'operating_system':
-            return self.operating_system
+            return self.operating_system(options.vm, options.type)
         if string == 'attach_disk':
-            return self.attach_disk
+            return self.attach_disk(options.vm, options.disk)
 
     def engine_child(self, vm):
         engine_url = self.setup['url'].rstrip('/api')
@@ -80,22 +80,21 @@ class Set(object):
         except Exception:
             return 1
 
-    def domain_state(self):
+    def domain_state(self, domainname, state):
         """ change domain's mode to maintainance or detach or activate """
-        options = self.options
-        (sd, dc) = get_sd_dc_objects(self.api, options)
-        if options.state == 'maintenance':
+        (sd, dc) = get_sd_dc_objects(self.api, domainname)
+        if state == 'maintenance':
             try:
                 sd.deactivate()
             except Exception, e:
                 print e
-        elif options.state == 'unattached':
+        elif state == 'unattached':
             sd.deactivate()
             while sd.get_status().get_state() != 'maintenance':
                 sleep(2)
-                sd = dc.storagedomains.get(options.domain)
+                sd = dc.storagedomains.get(domainname)
             sd.delete()
-        elif options.state == 'up':
+        elif state == 'up':
             sd.activate()
         else:
             print "operation Failed, option: \"--state\" is needed" \
@@ -103,13 +102,12 @@ class Set(object):
             return 1
         return 0
 
-    def attach_disk(self):
-        options = self.options
-        vm = self.api.vms.get(options.vm)
+    def attach_disk(self, vmname, diskname):
+        vm = self.api.vms.get(vmname)
         if vm is None:
-            print "VM %s was not found" % (options.vm)
+            print "VM %s was not found" % (vmname)
             return 1
-        disk = self.api.disks.get(options.disk)
+        disk = self.api.disks.get(diskname)
         vm.disks.add(disk)
         sleep(2)
         disk = vm.disks.get(disk.get_name())
@@ -157,27 +155,25 @@ class Set(object):
         write_object_to_file(path, os_types)
         return os_types.replace(' ', '\n')
 
-    def operating_system(self):
-        options = self.options
-        vm = self.api.vms.get(options.vm)
-        name = options.type
-        os_info = self.collect_os(options.type)
-        if name is None or os_info is False:
+    def operating_system(self, vmname, os_type):
+        vm = self.api.vms.get(vmname)
+        os_info = self.collect_os(os_type)
+        if os_type is None or os_info is False:
             os_types = self.return_os_types()
             print "specify correct os type:\n%s" % (os_types)
-            write_object_to_file('%s/os_types' % self.path, os_types)
+            write_object_to_file('%s/os_types' % "/tmp", os_types)
             return 1
-        kernel = "%s/%s%s" % (self.image_path, options.type,
+        kernel = "%s/%s%s" % (self.image_path, os_type,
                               "-x86_64-vmlinuz")
-        initrd = "%s/%s%s" % (self.image_path, options.type,
+        initrd = "%s/%s%s" % (self.image_path, os_type,
                               "-x86_64-initrd.img")
         ks_path = os_info['ks']
         ks_path = ks_path.replace(' ', '%20')
-        os_dest = {'name': name, 'kernel': kernel, 'initrd': initrd}
+        os_dest = {'name': os_type, 'kernel': kernel, 'initrd': initrd}
         print "preppering hypervisor for VM's os installation"
         host = self.select_host_on_cluster(vm, os_dest, os_info)
         print "hypervisor preppered"
-        vm = self.api.vms.get(options.vm)
+        vm = self.api.vms.get(vmname)
         network = params.Network(name=self.api.networks.list()[0].get_name())
         nic = params.NIC(name='eth0', network=network, interface='virtio')
         if len(vm.nics.list()) == 0:
@@ -188,9 +184,9 @@ class Set(object):
         boot1 = params.Boot(dev='hd')
         str_vmlinuz = '-x86_64-vmlinuz'
         str_initrd = '-x86_64-initrd.img'
-        cmdline = "%s%s initrd=boot/%s%s ks=%s" % (options.type,
+        cmdline = "%s%s initrd=boot/%s%s ks=%s" % (os_type,
                                                    str_vmlinuz,
-                                                   options.type,
+                                                   os_type,
                                                    str_initrd,
                                                    ks_path)
         cmdline += " loglevel=debug network kssendmac noverifyssl poweroff"
@@ -213,12 +209,11 @@ class Set(object):
             print "father %s" % Ref
             return 0
 
-    def vm_state(self):
+    def vm_state(self, vmname, state):
         """ stop or start a vm """
 
-        options = self.options
-        vm = self.api.vms.get(options.vm)
-        if options.state == 'up':
+        vm = self.api.vms.get(vmname)
+        if state == 'up':
             try:
                 vm.start()
             except Exception, e:
@@ -229,15 +224,11 @@ class Set(object):
             except Exception, e:
                 print e
 
-    def iscsilogin(self):
+    def iscsilogin(self, hostname, address, target):
         """ login to iscsi session """
-        options = self.options
-        if '-1' not in options.host:
-            h1 = self.api.hosts.get(options.host)
-        else:
-            h1 = self.api.hosts.list()[0]
-        iscsi = params.IscsiDetails(address=options.address,
-                                    target=options.target)
+        h1 = self.api.hosts.get(hostname)
+        iscsi = params.IscsiDetails(address=address,
+                                    target=target)
         login = params.Action(iscsi=iscsi)
         h1.iscsilogin(login)
 
@@ -249,12 +240,13 @@ class Set(object):
             remote_host.wget_file(os_dest['initrd'], os_info['initrd'])
             sleep(5)
 
-    def guestagent(self):
+    def guestagent(self, vm_address, password=None):
         """ install guestagent on a vm """
-        options = self.options
-        ip = options.vm_address
+        ip = vm_address
+        if password is None:
+            password = self.hypervisor_password
         try:
-            paramiko_vm = Host(ip, options.password)
+            paramiko_vm = Host(ip, password)
         except Exception:
             print "ssh session failed on %s" % (ip)
         src_1 = "%s/guest.sh" % (self.path)
@@ -269,17 +261,16 @@ class Set(object):
         print "guestagent has been deployed"
         return 0
 
-    def host_state(self):
+    def host_state(self, hostname, state):
         """ stop or start a vm """
 
-        options = self.options
-        h1 = self.api.hosts.get(options.host)
-        if options.state == 'up':
+        h1 = self.api.hosts.get(hostname)
+        if state == 'up':
             try:
                 h1.activate()
             except Exception, e:
                 print e
-        elif options.state == 'maintenance':
+        elif state == 'maintenance':
             try:
                 h1.deactivate()
             except Exception, e:

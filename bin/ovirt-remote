@@ -17,7 +17,7 @@ export SETUP
 if [ $2 == 'new' ]
 then
 A=`sed 's/, /,/g' <<<$@`
-python $path/ovirtremotesdk/run.py $USER $A
+python $path/ovirtremotesdk/run.py $A
 exit 0
 fi
-python $path/ovirtremotesdk/run.py $USER $@
+python $path/ovirtremotesdk/run.py $@

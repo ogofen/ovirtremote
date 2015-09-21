@@ -1,16 +1,13 @@
 from tabulate import tabulate
 from ovirtremotesdk.utils import write_object_to_file
+from ovirtremotesdk.classes.ovirtremoteobject import remoteoperationobject
 from hosts import Host
 from ovirtsdk.xml import params
 
 
-class Get(object):
-    def __init__(self, ovirtremote):
-        self.api = ovirtremote.api
-        self.path = ovirtremote.path
-        self.setup = ovirtremote.setup
-        self.hypervisor_password = self.setup['hypervisor_password']
-        self.options = ovirtremote.options
+class Get(remoteoperationobject):
+    def __init__(self, operation_object, argv):
+        super(Get, self).__init__(operation_object, argv)
 
     def is_block(self, type_):
         if 'iscsi' in type_ or 'fcp' in type_:
@@ -20,25 +17,23 @@ class Get(object):
     def __str__(self):
         return "get"
 
-    def get(self, string):
+    def exec_cmd(self, string, options):
         if string == 'block_storage_span':
-            return self.Available_luns_list
+            return self.Available_luns_list(options.host)
         if string == 'hosts_info':
-            return self.hostsinfo
+            return self.hostsinfo()
         if string == 'vms_info':
-            return self.vmsinfo
+            return self.vmsinfo()
         if string == 'iqns_discovery':
-            return self.showiqn
+            return self.showiqn(options.address, options.host)
         if string == 'datacenters_info':
-            return self.dcinfo
+            return self.dcinfo()
         if string == 'domains_info':
-            return self.sdinfo
+            return self.sdinfo()
         if string == 'disks_info':
-            return self.disksinfo
-        if string == 'vm_ip':
-            return self.vm_ip
+            return self.disksinfo()
         if string == 'vm_inquiry':
-            return self.vm_inquiry
+            return self.vm_inquiry(options.vm, options.password)
 
     def select_host_from_cluster(self, cluster):
         for host in self.api.hosts.list():
@@ -68,12 +63,9 @@ class Get(object):
         unregistered.extend(sd)
         return unregistered
 
-    def Available_luns_list(self):
-        options = self.options
-        if '-1' not in options.host:
-            h1 = self.api.hosts.get(options.host)
-        else:
-            h1 = self.api.hosts.list()[0]
+    def Available_luns_list(self, hostname):
+        print_flag = False
+        h1 = self.api.hosts.get(hostname)
         path = "%s/luns_id" % "/tmp"
         storage_list = h1.storage.list()
         vg_uuid_list = list()
@@ -187,8 +179,8 @@ class Get(object):
             print e
         remote_host.__del__()
 
-    def vm_ip(self, options, hostname):
-        vm = self.api.vms.get(options.vm)
+    def vm_ip(self, vmname, hostname):
+        vm = self.api.vms.get(vmname)
         host = self.api.hosts.get(hostname)
         mac = vm.nics.list()[0].get_mac().get_address()
         bridge = self.api.networks.list()[0].get_name()
@@ -200,22 +192,23 @@ class Get(object):
         out = r_host.run_bash_command(cmd)
         return out[out.find('Acquired IP:')+13:].rstrip()
 
-    def vm_inquiry(self):
-        options = self.options
+    def vm_inquiry(self, vmname, password=None):
+        if password is None:
+            password = self.hypervisor_password
         path = "%s/vm_address" % ("/tmp")
-        vm = self.api.vms.get(options.vm)
+        vm = self.api.vms.get(vmname)
         if vm is None:
-            print "No VM \"%s\" was found" % (options.vm)
+            print "No VM \"%s\" was found" % (vmname)
             return 1
         cluster = vm.get_cluster()
         host = self.select_host_from_cluster(cluster.get_id())
         try:
-            ip = self.vm_ip(options, host.get_name())
+            ip = self.vm_ip(vmname, host.get_name())
         except Exception:
-            print "VM \"%s\" is down or non-responsive" % options.vm
+            print "VM \"%s\" is down or non-responsive" % vmname
             return 1
         try:
-            r_vm = Host(ip, options.password)
+            r_vm = Host(ip, password)
         except Exception, e:
             print "Vm is running on %s, paramiko failed to return os" % (ip)
             write_object_to_file(path, ip)
@@ -322,15 +315,10 @@ class Get(object):
                          ["name", "address", "id", "state", "cluster"])
         print table
 
-    def showiqn(self):
+    def showiqn(self, address, hostname):
         """ list all host's iqns """
-        options = self.options
-        if '-1' not in options.host:
-            h1 = self.api.hosts.get(options.host)
-        else:
-            print "host name is required"
-            return 1
-        iscsi = params.IscsiDetails(address=options.address)
+        h1 = self.api.hosts.get(hostname)
+        iscsi = params.IscsiDetails(address=address)
         discover = params.Action(iscsi=iscsi)
         iqns = h1.iscsidiscover(discover)
         for iqn in iqns.get_iscsi_target():

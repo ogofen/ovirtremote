@@ -43,14 +43,14 @@ def get_dc_from_cluster(api, cluster):
             return dc
 
 
-def get_sd_dc_objects(api, options):
-    sd = api.storagedomains.get(options.domain)
+def get_sd_dc_objects(api, domain):
+    sd = api.storagedomains.get(domain)
     try:
         dc = sd.get_data_centers().get_data_center()[0]
     except Exception:
         return sd, None
     dc = api.datacenters.get(id=dc.get_id())
-    sd = dc.storagedomains.get(options.domain)
+    sd = dc.storagedomains.get(domain)
     return sd, dc
 
 
