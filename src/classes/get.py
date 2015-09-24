@@ -1,13 +1,12 @@
 from tabulate import tabulate
-from ovirtremotesdk.utils import write_object_to_file
-from ovirtremotesdk.classes.ovirtremoteobject import remoteoperationobject
 from hosts import Host
+from ovirtremotesdk.classes.ovirtremoteobject import remote_operation_object
 from ovirtsdk.xml import params
 
 
-class Get(remoteoperationobject):
-    def __init__(self, operation_object, argv):
-        super(Get, self).__init__(operation_object, argv)
+class Get(remote_operation_object):
+    def __init__(self, setup_dictionary, machine_readable):
+        super(Get, self).__init__(setup_dictionary, machine_readable)
 
     def is_block(self, type_):
         if 'iscsi' in type_ or 'fcp' in type_:
@@ -19,7 +18,7 @@ class Get(remoteoperationobject):
 
     def exec_cmd(self, string, options):
         if string == 'block_storage_span':
-            return self.Available_luns_list(options.host)
+            return self.block_storage_span(options.host)
         if string == 'hosts_info':
             return self.hostsinfo()
         if string == 'vms_info':
@@ -63,110 +62,53 @@ class Get(remoteoperationobject):
         unregistered.extend(sd)
         return unregistered
 
-    def Available_luns_list(self, hostname):
-        print_flag = False
+    def block_storage_span(self, hostname):
         h1 = self.api.hosts.get(hostname)
-        path = "%s/luns_id" % "/tmp"
-        storage_list = h1.storage.list()
-        vg_uuid_list = list()
+        vg_uuid_dict = dict()
+        lun_uuid_list = list()
         luns_info_list = list()
-        for storage_ in storage_list:
-            lun_info = [storage_.get_id(),
-                        storage_.get_logical_unit()[0].get_volume_group_id()]
-            lun_info.append(storage_.get_type())
-            state = storage_.get_logical_unit()[0].get_status()
-            size = storage_.get_logical_unit()[0].get_size()/pow(1024, 3)
-            try:
-                vendor = storage_.get_logical_unit()[0].get_vendor_id()
-            except Exception:
-                vendor = "not specified"
-            lun_info += [state, size, vendor]
-            luns_info_list += [lun_info]
-
-        if luns_info_list == []:
-            print "no luns available on host"
-            return 0
-        table = tabulate(luns_info_list, ["id", "vg_id", "type", "status",
-                                          "size", "vendor"])
-        title = table.find(luns_info_list[0][0])
         sdomains = self.api.storagedomains.list()
+        storage_list = h1.storage.list()
         unsdomains = self.get_unregistered(h1, storage_list)
         for domain in sdomains:
             if self.is_block(domain.get_storage().get_type()):
-                print '%s' % domain.get_name()
-                print '-----------'
-                print table[0:title-1],
-                print_flag = True
-                tmp_table = table[title-1:]
                 vg = domain.get_storage().get_volume_group()
-                vg_uuid_list.append(vg.get_id())
-                offset = tmp_table.find(vg.get_id())
-                while offset != -1:
-                    start = tmp_table[:offset].rfind('\n')
-                    end = offset + tmp_table[offset:].find('\n')
-                    if offset-1 == end:
-                        print tmp_table[start:]
-                        break
-                    print tmp_table[start:end],
-                    tmp_table = tmp_table[end:]
-                    offset = tmp_table.find(vg.get_id())
-                print '\n'
-        if print_flag is True:
-            print ''
+                vg_uuid_dict[vg.get_id()] = domain.get_name()
 
         for domain in unsdomains:
-            print "\n%s (unregistered)" % domain.get_name()
-            print '-----------'
-            print table[0:title-1],
-            tmp_table = table[title-1:]
             vg = domain.get_storage().get_volume_group()
-            vg_uuid_list.append(vg.get_id())
-            offset = tmp_table.find(vg.get_id())
-            while offset != -1:
-                start = tmp_table[:offset].rfind('\n')
-                end = offset + tmp_table[offset:].find('\n')
-                if offset-1 == end:
-                    print tmp_table[start:]
-                    break
-                print tmp_table[start:end],
-                tmp_table = tmp_table[end:]
-                offset = tmp_table.find(vg.get_id())
-            print ''
+            vg_uuid_dict[vg.get_id()] = domain.get_name()+'(unregistered)'
 
-        lun_id_list = list()
         for disk in self.api.disks.list():
             lun = disk.get_lun_storage()
             if lun is not None:
-                lun_id_list += [lun.get_id()]
-                print '\ndirect lun disk: %s' % disk.get_name()
-                print table[0:title-1]
-                start = table.find(lun.get_id())
-                end = start + table[start:].find('\n')
-                if end > start:
-                    print table[start:end]
-                elif start == -1:
-                    print "-- host can't \"see\" LUN --"
-                else:
-                    print table[start:]
+                lun_uuid_list += [lun.get_id()]
 
-        print ''
-        print 'Available Luns'
-        print '----------------'
-        print table[0:title-1]
-        luns_id = ''
-        used = lun_id_list + vg_uuid_list
         for storage_ in storage_list:
+            logical_unit = storage_.get_logical_unit()[0]
             id = storage_.get_id()
-            vg_uuid = storage_.get_logical_unit()[0].get_volume_group_id()
-            if id not in used and vg_uuid not in used:
-                start = table.find(id)
-                luns_id += ''.join(id + ' ')
-                end = start + table[start:].find('\n')
-                if end > start:
-                    print table[start:end]
-                else:
-                    print table[start:]
-        write_object_to_file(path, luns_id)
+            vg_uuid = logical_unit.get_volume_group_id()
+            usage = None
+            lun_info = [id, vg_uuid, storage_.get_type()]
+            if vg_uuid in vg_uuid_dict:
+                usage = vg_uuid_dict[vg_uuid]
+            if id in lun_uuid_list:
+                usage = "direct lun"
+            state = storage_.get_logical_unit()[0].get_status()
+            size = storage_.get_logical_unit()[0].get_size()/pow(1024, 3)
+            try:
+                vendor = logical_unit.get_vendor_id()
+            except Exception:
+                vendor = "not specified"
+            if usage is None:
+                usage = 'available'
+            lun_info += [state, size, vendor, usage]
+            luns_info_list += [lun_info]
+        if self.machine_readable is True:
+            return luns_info_list
+        table = tabulate(luns_info_list, ["id", "vg_id", "type", "status",
+                                          "size", "vendor", "usage"])
+        return table
 
     def ini_host(self, host):
         remote_host = Host(host.get_address(), self.hypervisor_password)
@@ -195,7 +137,6 @@ class Get(remoteoperationobject):
     def vm_inquiry(self, vmname, password=None):
         if password is None:
             password = self.hypervisor_password
-        path = "%s/vm_address" % ("/tmp")
         vm = self.api.vms.get(vmname)
         if vm is None:
             print "No VM \"%s\" was found" % (vmname)
@@ -211,19 +152,20 @@ class Get(remoteoperationobject):
             r_vm = Host(ip, password)
         except Exception, e:
             print "Vm is running on %s, paramiko failed to return os" % (ip)
-            write_object_to_file(path, ip)
+            self.write_object_to_file("vm_address", ip)
             return e
         os_info = r_vm.return_os()
-        print "VM \"%s\" is running %s %s on address: %s" % (vm.get_name(),
-                                                             os_info[0],
-                                                             os_info[1], ip)
-        write_object_to_file(path, ip)
+        self.write_object_to_file("vm_address", ip)
         r_vm.__del__()
+        if self.machine_readable is True:
+            return vm.get_name, os_info, ip
+        print "VM name = \'%s\'" % vm.get_name()
+        print "VM os = \'%s %s\'" % (os_info[0], os_info[1])
+        print "VM ip = %s" % ip
 
     def vmsinfo(self):
         """ list all VM's and their ips """
         vm_info = list()
-        path = "%s/vm_names" % ("/tmp")
         names = ''
         for VM in self.api.vms.list():
             ga = VM.get_guest_info()
@@ -243,59 +185,62 @@ class Get(remoteoperationobject):
             vm_info.append([VM.get_name(), ip, VM.get_id(),
                             mac, VM.get_status().get_state()])
 
-        file = open(path, 'w')
-        file.write(names)
-        file.close()
+        self.write_object_to_file("names", names)
+        if self.machine_readable is True:
+            return vm_info
         table = tabulate(vm_info, ["name", "ip", "id", "mac address", "state"])
         print table
 
     def disksinfo(self):
-        """ list all VM's and their ips """
+        """ list all important disks information"""
         disk_info = list()
         for disk in self.api.disks.list():
-            if disk.get_name() == 'OVF_STORE':
-                continue
             try:
                 domain = disk.get_storage_domains().get_storage_domain()[0]
                 domain = self.api.storagedomains.get(id=domain.get_id())
                 domain = domain.get_name()
             except Exception:
                 domain = 'None'
-            vm_name = 'Floating'
-            for vm in self.api.vms.list():
-                if vm.disks.get(disk.get_name()):
-                    vm_name = vm.get_name()
-                    break
-                if vm_name != 'Floating':
-                    break
-            if not disk.get_format():
-                format = 'None'
-            else:
-                format = disk.get_format()
-            if disk.get_bootable() is True:
-                boot = 'True'
-            else:
-                boot = 'False'
-            if disk.get_sparse() is True:
+            format = disk.get_format()
+            sparse = disk.get_sparse()
+            if sparse == 0:
+                sparse = 'prealocated'
+            elif sparse == 1:
                 sparse = 'sparse'
             else:
-                sparse = 'preallocated'
-            virtual_size = disk.get_size()/pow(1024, 3)
-            true_size = disk.get_provisioned_size()/pow(1024, 3)
+                sparse = 'None'
+            try:
+                size = float(disk.get_size())/pow(1024, 3)
+                size = "%.2f" % size
+            except Exception:
+                size = 'None'
+                pass
+            try:
+                virtual_size = float(disk.get_provisioned_size())/pow(1024, 3)
+                virtual_size = "%.2f" % virtual_size
+            except Exception:
+                virtual_size = 'None'
+                pass
+            try:
+                true_size = float(disk.get_actual_size())/pow(1024, 3)
+                true_size = "%.2f" % true_size
+            except Exception:
+                true_size = 'None'
+                pass
             disk_info.append([disk.get_name(), disk.get_storage_type(),
-                              format, sparse, virtual_size, true_size,
-                              disk.get_interface(), boot, domain, vm_name])
+                              format, sparse, size, virtual_size,
+                              true_size, disk.get_interface(), domain])
+        if self.machine_readable is True:
+            return disk_info
         table = tabulate(disk_info, ["name", "type", "format", "provision",
-                                     "V_size(g)", "T_size(g)", "interface",
-                                     "is_bootable", "domain", "vm"])
+                                     "size", "V_size(g)", "T_size(g)",
+                                     "interface", "domain"])
         print table
 
     def hostsinfo(self):
         """ list all VM's and their ips """
         _hostsinfo = list()
         hosts_names = ''
-        path = "%s/hosts_names" % ("/tmp")
-
         for host in self.api.hosts.list():
             tmp_host_info = list()
             host_name = host.get_name()
@@ -310,7 +255,9 @@ class Get(remoteoperationobject):
             cluster = self.api.clusters.get(id=c_id).get_name()
             tmp_host_info.append(cluster)
             _hostsinfo.append(tmp_host_info)
-        write_object_to_file(path, hosts_names)
+        self.write_object_to_file("hosts_names", hosts_names)
+        if self.machine_readable is True:
+            return _hostsinfo
         table = tabulate(_hostsinfo,
                          ["name", "address", "id", "state", "cluster"])
         print table
@@ -341,11 +288,13 @@ class Get(remoteoperationobject):
                             str(ver.get_major())+'.'+str(ver.get_minor()),
                             dc.get_id(), dc.get_status().get_state()])
 
+        self.write_object_to_file('%s/dc_names' % "/tmp", dc_names)
+        self.write_object_to_file('%s/cluster_names' % "/tmp", cluster_names_)
+        if self.machine_readable is True:
+            return dc_info
         table = tabulate(dc_info, ["name", "cluster", "release", "id",
                                    "status"])
         print table
-        write_object_to_file('%s/dc_names' % "/tmp", dc_names)
-        write_object_to_file('%s/cluster_names' % "/tmp", cluster_names_)
 
     def sdinfo(self):
         """ list all dc's and their info """
@@ -370,7 +319,9 @@ class Get(remoteoperationobject):
                 sd_info.append([sd_name, sd.get_type(),
                                 sd.get_storage().get_type(), '-',
                                 sd.get_id(), sd.get_status().get_state()])
+        self.write_object_to_file('%s/domain_names' % ("/tmp"), domain_names)
+        if self.machine_readable is True:
+            return sd_info
         table = tabulate(sd_info, ["name", "type", "storage", "datacenter",
                                    "id", "status"])
         print table
-        write_object_to_file('%s/domain_names' % ("/tmp"), domain_names)

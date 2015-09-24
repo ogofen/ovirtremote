@@ -3,26 +3,16 @@ from ovirtremotesdk.classes.delete import Delete
 from ovirtremotesdk.classes.get import Get
 from ovirtremotesdk.classes.new import New
 from ovirtremotesdk.classes.set import Set
-from ovirtremotesdk.classes.ovirtremoteobject import remoteoperationobject
-from ovirtsdk.api import API
-import sys
+from ovirtremotesdk.classes.ovirtremoteobject import remote_operation_object
 
 
-class ovirtremote(object):
-    def __init__(self, setup_dictionary, argv):
-        self.setup = setup_dictionary
-        try:
-            self.api = API(url=self.setup['url'],
-                           password=self.setup['password'],
-                           username=self.setup['user'], insecure=True)
-        except Exception:
-            print "ovirt-remote failed to connect to engine"
-            sys.exit()
-        remoteobject = remoteoperationobject(self, argv)
-        self.new = New(remoteobject)
-        self.delete = Delete(remoteobject)
-        self.get = Get(remoteobject, argv)
-        self.set = Set(remoteobject)
+class OvirtRemote(remote_operation_object):
+    def __init__(self, setup, machine_readable=True):
+        super(OvirtRemote, self).__init__(setup, machine_readable)
+        self.new = New(setup, machine_readable)
+        self.delete = Delete(setup, machine_readable)
+        self.get = Get(setup, machine_readable)
+        self.set = Set(setup, machine_readable)
         self.operations = [self.new, self.delete, self.get, self.set]
 
     def getOperation(self, string):
@@ -32,9 +22,6 @@ class ovirtremote(object):
 
     def execute_cmd(self, argv, options):
         op = self.getOperation(argv[1])
-        sys.exit(op.exec_cmd(argv[2], options))
-
-    def write_object_to_file(path, obj):
-        file = open(path, 'w')
-        file.write(obj)
-        file.close()
+        status = op.exec_cmd(argv[2], options)
+        if status == 0:
+            return "successful"

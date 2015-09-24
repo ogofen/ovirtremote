@@ -1,77 +1,8 @@
 #!/usr/bin/python
-from ovirtremotesdk.ovirtremote import ovirtremote
-from configparser import SafeConfigParser
+from ovirtremotesdk.ovirtremote import OvirtRemote
 from optparse import OptionParser
 import sys
 from os import system
-
-
-def collect_params(setup):
-    parser = SafeConfigParser()
-    parser.read('/etc/ovirt-remote.conf')
-    setup_dict = dict()
-    try:
-        setup_dict['url'] = parser.get(setup, 'url').encode('ascii')
-    except Exception:
-        pass
-    try:
-        setup_dict['cluster'] = parser.get(setup, 'cluster').encode('ascii')
-    except Exception:
-        pass
-    try:
-        setup_dict['name'] = parser.get(setup, 'name').encode('ascii')
-    except Exception:
-        pass
-    try:
-        setup_dict['user'] = parser.get(setup, 'user').encode('ascii')
-    except Exception:
-        pass
-    try:
-        setup_dict['password'] = parser.get(setup, 'password').encode('ascii')
-    except Exception:
-        pass
-    try:
-        setup_dict['secret_value'] = parser.get(setup, 'secret_value').encode('ascii')
-    except Exception:
-        pass
-    try:
-        setup_dict['uuid'] = parser.get(setup, 'uuid').encode('ascii')
-    except Exception:
-        pass
-    try:
-        setup_dict['tenant'] = parser.get(setup, 'tenant').encode('ascii')
-    except Exception:
-        pass
-    try:
-        setup_dict['auth_url'] = parser.get(setup, 'auth_url').encode('ascii')
-    except Exception:
-        pass
-    try:
-        setup_dict['hypervisor_password'] = parser.get(setup, 'servers_password').encode('ascii')
-    except Exception:
-        pass
-    try:
-        setup_dict['default_password'] = parser.get('default_password',
-                                                    'password').encode('ascii')
-    except Exception:
-        pass
-    try:
-        setup_dict['password'] = parser.get(setup, 'password').encode('ascii')
-    except Exception:
-        pass
-    try:
-        setup_dict['address'] = parser.get(setup, 'address').encode('ascii')
-    except Exception:
-        pass
-    try:
-        setup_dict['path'] = parser.get(setup, 'path').encode('ascii')
-    except Exception:
-        pass
-    try:
-        setup_dict['luns'] = parser.get(setup, 'luns').encode('ascii')
-    except Exception:
-        pass
-    return setup_dict
 
 
 def parseOpt(argv):
@@ -106,11 +37,15 @@ def parseOpt(argv):
 def run_ovirt_remote(argv):
     """ This Function connects To our engine,classes and db
     """
-    setup_dictionary = collect_params(argv[0])
+    ovirt = OvirtRemote(argv[0], False)
     options, args = parseOpt(argv)
-    ovirt = ovirtremote(setup_dictionary, argv)
     if ovirt is not None:
-        sys.exit(ovirt.execute_cmd(argv, options))
+        status = ovirt.execute_cmd(argv, options)
+        if status == "successful":
+            return 0
+        else:
+            return 1
+
 
 if __name__ == "__main__":
     if sys.argv[3] == 'start_bpython':

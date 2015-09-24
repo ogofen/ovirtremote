@@ -1,10 +1,10 @@
 from time import sleep
-from ovirtremotesdk.utils import get_sd_dc_objects
+from ovirtremotesdk.classes.ovirtremoteobject import remote_operation_object
 
 
-class Delete(object):
-    def __init__(self, ovirtremote):
-        self.api = ovirtremote.api
+class Delete(remote_operation_object):
+    def __init__(self, setup_dictionary, machine_readable):
+        super(Delete, self).__init__(setup_dictionary, machine_readable)
 
     def __str__(self):
         return "delete"
@@ -24,7 +24,7 @@ class Delete(object):
     def domain(self, domain_name):
         """ removes a domain """
 
-        (sd, dc) = get_sd_dc_objects(self.api, domain_name)
+        (sd, dc) = self.get_sd_dc_objects(self.api, domain_name)
         if sd is None:
             print "storage domain wasn't found"
             return 1
@@ -46,11 +46,11 @@ class Delete(object):
                 sd_no_dc.set_host(host)
         if sd.get_type() == 'iso':
             sd_no_dc.delete(sd_no_dc)
-            return 0
+            return 'successful'
 
         sd_no_dc.set_format('True')
         sd_no_dc.delete(sd_no_dc)
-        return 0
+        return 'successful'
 
     def all_vms_and_disks(self):
         for vm in self.api.vms.list():
@@ -80,6 +80,7 @@ class Delete(object):
             except Exception:
                 pass
         vm.delete()
+        return 'successful'
 
     def host(self, host_name):
         """ removes a host """
@@ -91,15 +92,18 @@ class Delete(object):
             pass
         sleep(3)
         host.delete()
+        return 'successful'
 
     def cluster(self, cluster):
         """ removes a cluster """
 
         cl = self.api.clusters.get(cluster)
         cl.delete()
+        return 'successful'
 
     def disk(self, disk_name):
         """ removes a domain """
 
         disk = self.api.disks.get(disk_name)
         disk.delete()
+        return 'successful'

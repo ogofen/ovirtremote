@@ -3,24 +3,13 @@ import sys
 import os
 from configparser import SafeConfigParser
 from ovirtremotesdk.classes.hosts import Host
-from ovirtremotesdk.utils import get_sd_dc_objects, write_object_to_file
+from ovirtremotesdk.classes.ovirtremoteobject import remote_operation_object
 from ovirtsdk.xml import params
 
 
-def get_iso(dc):
-    for sd in dc.storagedomains.list():
-        if sd.get_type() == 'iso':
-            return sd.get_name()
-    return False
-
-
-class Set(object):
-    def __init__(self, ovirtremote):
-        self.api = ovirtremote.api
-        self.setup = ovirtremote.setup
-        self.path = ovirtremote.path
-        self.hypervisor_password = self.setup['hypervisor_password']
-        self.image_path = ovirtremote.image_path
+class Set(remote_operation_object):
+    def __init__(self, setup_dictionary, machine_readable):
+        super(Set, self).__init__(setup_dictionary, machine_readable)
 
     def is_block(self, type_):
         if 'iscsi' in type_ or 'fcp' in type_:
@@ -82,7 +71,7 @@ class Set(object):
 
     def domain_state(self, domainname, state):
         """ change domain's mode to maintainance or detach or activate """
-        (sd, dc) = get_sd_dc_objects(self.api, domainname)
+        (sd, dc) = self.get_sd_dc_objects(domainname)
         if state == 'maintenance':
             try:
                 sd.deactivate()
@@ -152,7 +141,7 @@ class Set(object):
         os_types = os_types.replace('[', '')
         os_types = os_types.replace(']', '')
         path = "%s/os_types" % (self.path)
-        write_object_to_file(path, os_types)
+        self.write_object_to_file(path, os_types)
         return os_types.replace(' ', '\n')
 
     def operating_system(self, vmname, os_type):
@@ -161,7 +150,7 @@ class Set(object):
         if os_type is None or os_info is False:
             os_types = self.return_os_types()
             print "specify correct os type:\n%s" % (os_types)
-            write_object_to_file('%s/os_types' % "/tmp", os_types)
+            self.write_object_to_file('%s/os_types' % "/tmp", os_types)
             return 1
         kernel = "%s/%s%s" % (self.image_path, os_type,
                               "-x86_64-vmlinuz")
