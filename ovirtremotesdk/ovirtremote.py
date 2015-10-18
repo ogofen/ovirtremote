@@ -22,6 +22,6 @@ class OvirtRemote(remote_operation_object):
 
     def execute_cmd(self, argv, options):
         op = self.getOperation(argv[1])
-        status = op.exec_cmd(argv[2], options)
+        status = op.exec_cmd(argv[2:], options)
         if status == 0:
             return "successful"

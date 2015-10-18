@@ -7,24 +7,25 @@ class New(remote_operation_object):
     def __init__(self, setup_dictionary, machine_readable):
         super(New, self).__init__(setup_dictionary, machine_readable)
 
-    def exec_cmd(self, string, options):
+    def exec_cmd(self, argv, options):
+        string = argv[0]
         if string == 'fcp-domain':
-            return self.blockdomain(options.domain, 'fcp',
+            return self.blockdomain(argv[1], 'fcp',
                                     options.datacenter, options.luns)
         if string == 'iscsi-domain':
-            return self.blockdomain(options.domain, 'iscsi',
+            return self.blockdomain(argv[1], 'iscsi',
                                     options.datacenter, options.luns)
         if string == 'nfs-domain':
-            return self.filedomain(options.domain, 'nfs', options.datacenter,
+            return self.filedomain(argv[1], 'nfs', options.datacenter,
                                    options.address, options.path)
         if string == 'vm':
             return self.vm(options.vm, options.cluster)
         if string == 'openstack_volume_provider':
-            return self.openstack_volume_provider(options.datacenter)
+            return self.openstack_volume_provider(argv[1], options.datacenter)
         if string == 'disk':
             return self.disk(options.disk, options.domain, options.bootable,
-                             options.type, options.size, options.sparse,
-                             options.format)
+                             int(options.size), options.interface,
+                             options.sparse, options.format)
         if string == 'direct_lun':
             return self.direct_lun
         if string == 'iso_domain':
@@ -39,7 +40,7 @@ class New(remote_operation_object):
         if string == 'cluster':
             return self.cluster(options.cluster, options.datacenter)
         if string == 'host':
-            return self.host(options.host, options.address, options.password,
+            return self.host(argv[1], options.address, options.password,
                              options.cluster)
 
     def __str__(self):
@@ -55,12 +56,13 @@ class New(remote_operation_object):
     def host(self, host_name, address=None, password=None, cluster=None):
         """ new host"""
         if address is None:
-            host_dict = self.collect_params(host_name)
+            host_dict = self.collect_params(host_name, "hypervisors")
             address = host_dict['address']
             cluster = host_dict['cluster']
+            password = host_dict['password']
         cl = self.api.clusters.get(cluster)
         host = params.Host(name=host_name, address=address,
-                           cluster=cl, root_password=self.hypervisor_password)
+                           cluster=cl, root_password=password)
         return self.api.hosts.add(host)
 
     def cluster(self, cluster, datacenter):
@@ -93,7 +95,7 @@ class New(remote_operation_object):
 
         (dc, host1) = self.get_host_and_dc(datacenter)
         if luns is None:
-            domain_dict = self.collect_params(domain_name)
+            domain_dict = self.collect_params(domain_name, "domain")
             luns = domain_dict['luns']
 
         storage = params.Storage(type_=type,
@@ -149,8 +151,6 @@ class New(remote_operation_object):
         """ create a new Vdisk """
 
         (sd, dc) = self.get_sd_dc_objects(domain_name)
-        dc = self.api.datacenters.get(id=dc.get_id())
-        sd = dc.storagedomains.get(domain_name)
         size = size*pow(1024, 3)
         disk = params.Disk(storage_domains=params.StorageDomains
                            (storage_domain=[sd]), size=size, type_='data',
@@ -211,8 +211,8 @@ class New(remote_operation_object):
             type = 'nfs'
         else:
             _type = 'data'
-        if address == '-1' and path == '-1':
-            domain_dict = self.collect_params(domain_name)
+        if address is None and path is None:
+            domain_dict = self.collect_params(domain_name, "domain")
             address = domain_dict['address']
             path = domain_dict['path']
         _storage = params.Storage
@@ -227,20 +227,19 @@ class New(remote_operation_object):
         except Exception, e:
             print e
 
-    def openstack_volume_provider(self):
+    def openstack_volume_provider(self, domain_name, datacenter):
         """ add cinder domain """
 
-        options = self.options
-        dc = self.api.datacenters.get(options.datacenter)
-        cinder = self.collect_params('openstack_volume_provider')
+        dc = self.api.datacenters.get(datacenter)
+        cinder = self.collect_params(domain_name, "domain")
         cinder_sd = params.OpenStackVolumeProvider
-        cinder_sd = cinder_sd(name=cinder['name'], password=cinder['password'],
+        cinder_sd = cinder_sd(name=domain_name, password=cinder['password'],
                               url=cinder['url'], username=cinder['user'],
                               authentication_url=cinder['auth_url'],
                               tenant_name=cinder['tenant'])
         cinder_sd.set_requires_authentication(True)
         self.api.openstackvolumeproviders.add(cinder_sd)
-        sd = self.api.storagedomains.get(cinder['name'])
+        sd = self.api.storagedomains.get(domain_name)
         dc.storagedomains.add(sd)
         sleep(5)
         cinder_sd = self.api.openstackvolumeproviders.get(cinder['name'])
@@ -250,4 +249,6 @@ class New(remote_operation_object):
         secret.set_value(cinder['secret_value'])
         secret.set_usage_type('ceph')
         cinder_sd.authenticationkeys.add(secret)
+        cinder_sd.update()
+        sleep(2)
         return cinder_sd

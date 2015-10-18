@@ -8,14 +8,14 @@ from os import system
 def parseOpt(argv):
     parser = OptionParser(usage='%prog [options] "name"', version='1.22',)
     parser.add_option("--state", dest="state", default=None)
-    parser.add_option("--size", dest="size", default=None)
-    parser.add_option("--format", dest="format", default=None)
+    parser.add_option("--size", dest="size", default=8)
+    parser.add_option("--format", dest="format", default='raw')
     parser.add_option("--dc_version", dest="version", default=None)
     parser.add_option("--vm_address", dest="vm_address")
     parser.add_option("--diskname", dest="disk", default=None)
-    parser.add_option("--sparse", dest="sparse", default=None)
-    parser.add_option("--bootable", dest="bootable", default=None)
-    parser.add_option("--interface", dest="interface", default=None)
+    parser.add_option("--sparse", dest="sparse", default=True)
+    parser.add_option("--bootable", dest="bootable", default=False)
+    parser.add_option("--interface", dest="interface", default='virtio')
     parser.add_option("--host", dest="host", default=None)
     parser.add_option("--hostname", dest="host", default=None)
     parser.add_option("--target", dest="target", default=None)
@@ -48,9 +48,9 @@ def run_ovirt_remote(argv):
 
 
 if __name__ == "__main__":
-    if sys.argv[3] == 'start_bpython':
-        path = '/home/%s/.ovirt-remote/start_bpython.py' % sys.argv[1]
-        cmd = 'bpython -i %s %s' % (path, sys.argv[2])
+    if sys.argv[2] == 'start_bpython':
+        path = '/etc/ovirt-remote/start_bpython.py %s' % sys.argv[1]
+        cmd = 'bpython -i %s' % path
         system(cmd)
     else:
         sys.exit(run_ovirt_remote(sys.argv[1:]))

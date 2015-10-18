@@ -83,7 +83,7 @@ class Set(remote_operation_object):
                 sleep(2)
                 sd = dc.storagedomains.get(domainname)
             sd.delete()
-        elif state == 'up':
+        elif state == 'active':
             sd.activate()
         else:
             print "operation Failed, option: \"--state\" is needed" \
@@ -106,7 +106,6 @@ class Set(remote_operation_object):
         host = None
         host = vm.get_host()
         while host is None:
-            print "host is none"
             if len(self.api.hosts.list()) == 1:
                 host = self.api.hosts.list()[0]
                 continue
@@ -140,8 +139,7 @@ class Set(remote_operation_object):
         os_types = os_types.replace('\n', ' ')
         os_types = os_types.replace('[', '')
         os_types = os_types.replace(']', '')
-        path = "%s/os_types" % (self.path)
-        self.write_object_to_file(path, os_types)
+        self.write_object_to_file('os_types', os_types)
         return os_types.replace(' ', '\n')
 
     def operating_system(self, vmname, os_type):
@@ -150,7 +148,7 @@ class Set(remote_operation_object):
         if os_type is None or os_info is False:
             os_types = self.return_os_types()
             print "specify correct os type:\n%s" % (os_types)
-            self.write_object_to_file('%s/os_types' % "/tmp", os_types)
+            self.write_object_to_file('os_types', os_types)
             return 1
         kernel = "%s/%s%s" % (self.image_path, os_type,
                               "-x86_64-vmlinuz")

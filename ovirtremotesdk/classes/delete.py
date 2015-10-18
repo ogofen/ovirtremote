@@ -9,22 +9,23 @@ class Delete(remote_operation_object):
     def __str__(self):
         return "delete"
 
-    def exec_cmd(self, string, options):
+    def exec_cmd(self, argv, options):
+        string = argv[0]
         if string == 'domain':
-            return self.domain(options.domain)
+            return self.domain(argv[1])
         elif string == 'vm':
-            return self.vm(options.vm)
+            return self.vm(argv[1])
         elif string == 'host':
-            return self.host(options.host)
+            return self.host(argv[1])
         elif string == 'all_vms_and_disks':
             return self.all_vms_and_disks()
         elif string == 'cluster':
-            return self.cluster(options.cluster)
+            return self.cluster(argv[1])
 
     def domain(self, domain_name):
         """ removes a domain """
 
-        (sd, dc) = self.get_sd_dc_objects(self.api, domain_name)
+        (sd, dc) = self.get_sd_dc_objects(domain_name)
         if sd is None:
             print "storage domain wasn't found"
             return 1
@@ -54,12 +55,16 @@ class Delete(remote_operation_object):
 
     def all_vms_and_disks(self):
         for vm in self.api.vms.list():
+            if vm.get_status().get_state() == 'up':
+                try:
+                    vm.stop()
+                    sleep(5)
+                except Exception:
+                    pass
             try:
-                vm.stop()
+                vm.delete()
             except Exception:
                 pass
-            sleep(5)
-            vm.delete()
         for disk in self.api.disks.list():
             if disk.get_name() == 'OVF_STORE':
                 continue

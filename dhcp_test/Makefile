@@ -5,7 +5,6 @@ CC=gcc
 
 all: dhtest clean
 dhtest: dhtest.o functions.o 
-	$(CC) dhtest.o functions.o -o ../bin/give_mac_return_ip
-
+	$(CC) dhtest.o functions.o -o /etc/ovirt-remote/give_mac_return_ip
 clean:
 	rm -f functions.o dhtest.o

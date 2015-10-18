@@ -6,6 +6,7 @@ _ovirt-remote()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     command="${COMP_WORDS[3]}"
+    command_type="${COMP_WORDS[2]}"
     opts="new get delete set start_bpython"
     args="--datacenter --vmname --datacenter --luns --address --path --host --domainname"
     case "${prev}" in
@@ -20,20 +21,24 @@ _ovirt-remote()
 	  start_bpython)
       return 0
       ;;
+    host)
+      COMPREPLY=( $(compgen -W "$hosts_names" -- ${cur}) )
+      return 0
+      ;;
 	  set)
-      COMPREPLY=( $(compgen -W "iscsi_login domain_state vm_state host_state guestagent operating_system attach_disk" ${cur}) )
+      COMPREPLY=( $(compgen -W "iscsi_login domain vm host guestagent operating_system attach_disk" ${cur}) )
       return 0
       ;;
 	  guestagent)
       COMPREPLY=( $(compgen -W "--password --vm_address" -- ${cur}) )
       return 0
       ;;
-    vm)
-      COMPREPLY=( $(compgen -W "--vmname --cluster" -- ${cur}) )
+    vm_info)
+      COMPREPLY=( $(compgen -W "$vm_names" -- ${cur}) )
       return 0
       ;;
     openstack_volume_provider)
-      COMPREPLY=( $(compgen -W "--datacenter" -- ${cur}) )
+      COMPREPLY=( $(compgen -W "$openstackvolumeprovider" -- ${cur}) )
       return 0
       ;;
     delete)
@@ -45,226 +50,107 @@ _ovirt-remote()
       return 0
       ;;
     get)
-      COMPREPLY=( $(compgen -W "block_storage_span hosts_info vms_info vm_inquiry iqns_discovery domains_info datacenters_info disks_info" ${cur}) )
+      COMPREPLY=( $(compgen -W "block_storage_span hosts_info all_vms_info vm_info iqns_discovery domains_info datacenters_info disks_info" ${cur}) )
       return 0
       ;;
-    block_storage_span)
-      COMPREPLY=( $(compgen -W "--host" -- ${cur}) )
+    iscsi-domain)
+      COMPREPLY=( $(compgen -W "$iscsi" -- ${cur}) )
       return 0
       ;;
-    hosts_info)
-      COMPREPLY=( $(compgen -W "" -- ${cur}) )
+    domain)
+      COMPREPLY=( $(compgen -W "$iscsi $fcp $nfs" -- ${cur}) )
       return 0
       ;;
-    vms_info)
-      COMPREPLY=( $(compgen -W "" -- ${cur}) )
-      return 0
-      ;;
-    iqns_discovery)
-      COMPREPLY=( $(compgen -W "--host --address" -- ${cur}) )
-      return 0
-      ;;
-    domains_info)
-      COMPREPLY=( $(compgen -W "" -- ${cur}) )
-      return 0
-      ;;
-    datacenters_info)
-      COMPREPLY=( $(compgen -W "" -- ${cur}) )
-      return 0
-      ;;
-    disks_info)
-      COMPREPLY=( $(compgen -W "" -- ${cur}) )
-      return 0
-      ;;
-    iso_domain)
-      COMPREPLY=( $(compgen -W "--datacenter" -- ${cur}) )
-      return 0
-      ;;
-    disk)
-      COMPREPLY=( $(compgen -W "--diskname --openstackvolumetype --sparse --bootable --interface --format --size --domainname" -- ${cur}) )
-      return 0
-      ;;
-    direct_lun)
-      COMPREPLY=( $(compgen -W "--diskname --bootable --interface --domainname --luns" -- ${cur}) )
-      return 0
-      ;;
-    host_state)
-      COMPREPLY=( $(compgen -W "--host --state" -- ${cur}) )
-      return 0
-      ;;
-    vm_state)
-      COMPREPLY=( $(compgen -W "--vmname --state" -- ${cur}) )
-      return 0
-      ;;
-    iscsi_login)
-      COMPREPLY=( $(compgen -W "--host --address --target" -- ${cur}) )
-      return 0
-      ;;
-    domain_state)
-      COMPREPLY=( $(compgen -W "--state --domainname" -- ${cur}) )
-      return 0
-      ;;
-    operating_system)
-      COMPREPLY=( $(compgen -W "--vmname --os_type --password" -- ${cur}) )
-      return 0
-      ;;
-    vm_inquiry)
-      COMPREPLY=( $(compgen -W "--vmname  --password" -- ${cur}) )
-      return 0
-      ;;
-    attach_disk)
-      COMPREPLY=( $(compgen -W "--vmname --diskname" -- ${cur}) )
-      return 0
-      ;;
-    vm_and_bootable_disk)
-      COMPREPLY=( $(compgen -W "--vmname --cluster --domainname" -- ${cur}) )
-      return 0
-      ;;
-    --datacenter)
-      COMPREPLY=( $(compgen -W "$dc_names" -- ${cur}) )
-      return 0
-      ;;
-    --vmname)
-      COMPREPLY=( $(compgen -W "$vm_names" -- ${cur}) )
-      return 0
-      ;;
-    --domainname)
-      COMPREPLY=( $(compgen -W "$domain_names" -- ${cur}) )
-      return 0
-      ;;
-    --os_type)
-      COMPREPLY=( $(compgen -W "$os_types" -- ${cur}) )
-      return 0
-      ;;
-    --luns)
-      COMPREPLY=( $(compgen -W "$luns_id" ${cur}) )
-      return 0
-      ;;
-    [0-9]*, )
-      COMPREPLY=( $(compgen -W "$luns_id" -- ${cur}) )
-      return 0
-      ;;
-    --cluster)
-      COMPREPLY=( $(compgen -W "$cluster_names" -- ${cur}) )
+    nfs-domain)
+      COMPREPLY=( $(compgen -W "$nfs" -- ${cur}) )
       return 0
       ;;
     --host)
       COMPREPLY=( $(compgen -W "$hosts_names" -- ${cur}) )
       return 0
       ;;
-    --hostname)
-      COMPREPLY=( $(compgen -W "$hosts_names" -- ${cur}) )
+    --datacenter)
+      COMPREPLY=( $(compgen -W "$dc_names" -- ${cur}) )
       return 0
       ;;
-    --state)
-      COMPREPLY=( $(compgen -W "up maintenance" -- ${cur}) )
+    [0-9]*, )
+      COMPREPLY=( $(compgen -W "$luns_id" -- ${cur}) )
       return 0
       ;;
-    --vm_address)
-      COMPREPLY=( $(compgen -W "$vm_address" -- ${cur}) )
+    fcp-domain)
+      COMPREPLY=( $(compgen -W "$fcp" -- ${cur}) )
       return 0
-      ;;
-    --*)
       ;;
     esac
    case "$command" in
-    host)
-      COMPREPLY=( $(compgen -W "--cluster --hostname --address" -- ${cur}) )
-      return 0
-      ;;
-    nfs-domain)
-      COMPREPLY=( $(compgen -W "--domainname --datacenter --address --path" -- ${cur}) )
+    openstack_volume_provider)
+      COMPREPLY=( $(compgen -W "--datacenter" -- ${cur}) )
       return 0
       ;;
     datacenter)
-      COMPREPLY=( $(compgen -W "--datacentername --dc_version" -- ${cur}) )
+      COMPREPLY=( $(compgen -W "--dc_version --name" -- ${cur}) )
       return 0
       ;;
     cluster)
-      COMPREPLY=( $(compgen -W "--datacenter --clustername" -- ${cur}) )
+      COMPREPLY=( $(compgen -W "--datacenter --name" -- ${cur}) )
       return 0
       ;;
-
-      attach_disk)
-        COMPREPLY=( $(compgen -W "--vmname --diskname" -- ${cur}) )
-        return 0
-        ;;
-      operating_system)
-        COMPREPLY=( $(compgen -W "--vmname --os_type --password" -- ${cur}) )
-        return 0
-        ;;
-      domain_state)
-        COMPREPLY=( $(compgen -W "--state --domainname" -- ${cur}) )
-        return 0
-        ;;
-      iscsi_login)
+    attach_disk)
+      COMPREPLY=( $(compgen -W "--vmname --diskname" -- ${cur}) )
+      return 0
+      ;;
+    operating_system)
+      COMPREPLY=( $(compgen -W "--vmname --os_type --password" -- ${cur}) )
+      return 0
+      ;;
+    iscsi_login)
         COMPREPLY=( $(compgen -W "--host --address --target" -- ${cur}) )
         return 0
         ;;
-      vm_state)
-        COMPREPLY=( $(compgen -W "--vmname --state" -- ${cur}) )
-        return 0
-        ;;
-      host_state)
-        COMPREPLY=( $(compgen -W "--host --state" -- ${cur}) )
-        return 0
-        ;;
-      direct_lun)
-        COMPREPLY=( $(compgen -W "--diskname --bootable --interface --domainname --luns" -- ${cur}) )
-        return 0
-        ;;
-      disk)
-        COMPREPLY=( $(compgen -W "--datacenter --openstackvolumetype --diskname --sparse --bootable --interface --format --size --domainname" -- ${cur}) )
-        return 0
-        ;;
-      iso_domain)
-        COMPREPLY=( $(compgen -W "--datacenter" -- ${cur}) )
-        return 0
-        ;;
-      domain)
-        COMPREPLY=( $(compgen -W "--domainname" -- ${cur}) )
-        return 0
-        ;;
-      iqns_discovery)
-        COMPREPLY=( $(compgen -W "--host --address" -- ${cur}) )
-        return 0
-        ;;
-      block_storage_span)
-        COMPREPLY=( $(compgen -W "--host" -- ${cur}) )
-        return 0
-        ;;
-      vm_and_bootable_disk)
-        COMPREPLY=( $(compgen -W "--vmname --cluster --domainname" -- ${cur}) )
-        return 0
-        ;;
-      vm_inquiry)
-        COMPREPLY=( $(compgen -W "--vmname  --password" -- ${cur}) )
-        return 0
-        ;;
-      vm)
-        COMPREPLY=( $(compgen -W "--vmname --cluster" -- ${cur}) )
-        return 0
-        ;;
-      fcp-domain)
-        COMPREPLY=( $(compgen -W "--domainname --datacenter --luns" -- ${cur}) )
-        return 0
-        ;;
-      iscsi-domain)
-        COMPREPLY=( $(compgen -W "--domainname --datacenter --luns" -- ${cur}) )
-        return 0
-        ;;
-      guestagent)
-        COMPREPLY=( $(compgen -W "--vm_address --password" -- ${cur}) )
-        return 0
-        ;;
-      available_luns_list)
-        COMPREPLY=( $(compgen -W "--host" -- ${cur}) )
-        return 0
-        ;;
-      ovirt-remote)
-        COMPREPLY=( $(compgen -W "$setups" ${cur}) )
-        return 0
-        ;;
+    direct_lun)
+      COMPREPLY=( $(compgen -W "--diskname --bootable --interface --domainname --luns" -- ${cur}) )
+      return 0
+      ;;
+    disk)
+      COMPREPLY=( $(compgen -W "--datacenter --openstackvolumetype --name --sparse --bootable --interface --format --size --domainname" -- ${cur}) )
+      return 0
+      ;;
+    *-domain)
+      COMPREPLY=( $(compgen -W "--datacenter" -- ${cur}) )
+      return 0
+      ;;
+    iqns_discovery)
+      COMPREPLY=( $(compgen -W "--host --address" -- ${cur}) )
+      return 0
+      ;;
+    block_storage_span)
+      COMPREPLY=( $(compgen -W "$hosts_names" -- ${cur}) )
+      return 0
+      ;;
+    vm_and_bootable_disk)
+      COMPREPLY=( $(compgen -W "--vmname --cluster --domainname" -- ${cur}) )
+      return 0
+      ;;
+    vm)
+      COMPREPLY=( $(compgen -W "--state --cluster --name" -- ${cur}) )
+      return 0
+      ;;
+    guestagent)
+      COMPREPLY=( $(compgen -W "--vm_address --password" -- ${cur}) )
+      return 0
+      ;;
+    disks_info)
+      COMPREPLY=( $(compgen -W "" ${cur}) )
+      return 0
+      ;;
+    hosts_info)
+      COMPREPLY=( $(compgen -W "" ${cur}) )
+      return 0
+      ;;
+    datacenters_info)
+      COMPREPLY=( $(compgen -W "" ${cur}) )
+      return 0
+      ;;
       esac
     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
 }

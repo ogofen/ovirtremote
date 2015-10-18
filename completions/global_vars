@@ -1,4 +1,14 @@
-setups=`sed 's/\[/''/g;s/\]/''/g' <<< $(cat /etc/ovirt-remote.conf | grep '\[')`
+setups=`sed 's/\[/''/g;s/\]/''/g' <<< $(cat /etc/ovirt-remote/ovirt-remote.conf | grep '\[')`
+hosts_names=`sed 's/\[/''/g;s/\]/''/g' <<< $(cat /etc/ovirt-remote/hypervisors.conf | grep '\[')`
+nfs=`sed 's/\[/''/g;s/\]/''/g' <<< $(cat /etc/ovirt-remote/domain.conf | grep -B 2 type=nfs | grep '\[')`
+iscsi=`sed 's/\[/''/g;s/\]/''/g' <<< $(cat /etc/ovirt-remote/domain.conf | grep -B 2 type=iscsi | grep '\[')`
+fcp=`sed 's/\[/''/g;s/\]/''/g' <<< $(cat /etc/ovirt-remote/domain.conf | grep -B 2 type=fcp | grep '\[')`
+openstackvolumeprovider=`sed 's/\[/''/g;s/\]/''/g' <<< $(cat /etc/ovirt-remote/domain.conf | grep -B 2 type=openstack_volume_provider | grep '\[')`
+export nfs
+export iscsi
+export fcp
+export openstackvolumeprovider
+export hosts_names
 export setups
 if [ -f  /tmp/vm_names ]
   then
@@ -14,11 +24,6 @@ if [ -f  /tmp/os_types ]
   then
 os_types=`cat /tmp/os_types`
 export os_types
-fi
-if [ -f  /tmp/hosts_names ]
-  then
-hosts_names=`cat /tmp/hosts_names`
-export hosts_names
 fi
 if [ -f  /tmp/domain_names ]
   then

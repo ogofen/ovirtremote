@@ -16,12 +16,13 @@ class Get(remote_operation_object):
     def __str__(self):
         return "get"
 
-    def exec_cmd(self, string, options):
+    def exec_cmd(self, argv, options):
+        string = argv[0]
         if string == 'block_storage_span':
-            return self.block_storage_span(options.host)
+            return self.block_storage_span(argv[1], True)
         if string == 'hosts_info':
             return self.hostsinfo()
-        if string == 'vms_info':
+        if string == 'all_vms_info':
             return self.vmsinfo()
         if string == 'iqns_discovery':
             return self.showiqn(options.address, options.host)
@@ -31,8 +32,8 @@ class Get(remote_operation_object):
             return self.sdinfo()
         if string == 'disks_info':
             return self.disksinfo()
-        if string == 'vm_inquiry':
-            return self.vm_inquiry(options.vm, options.password)
+        if string == 'vm_info':
+            return self.vm_inquiry(argv[1], options.password)
 
     def select_host_from_cluster(self, cluster):
         for host in self.api.hosts.list():
@@ -62,7 +63,7 @@ class Get(remote_operation_object):
         unregistered.extend(sd)
         return unregistered
 
-    def block_storage_span(self, hostname):
+    def block_storage_span(self, hostname, _print=False):
         h1 = self.api.hosts.get(hostname)
         vg_uuid_dict = dict()
         lun_uuid_list = list()
@@ -108,6 +109,9 @@ class Get(remote_operation_object):
             return luns_info_list
         table = tabulate(luns_info_list, ["id", "vg_id", "type", "status",
                                           "size", "vendor", "usage"])
+        if _print is True:
+            print table
+            return
         return table
 
     def ini_host(self, host):
@@ -185,7 +189,7 @@ class Get(remote_operation_object):
             vm_info.append([VM.get_name(), ip, VM.get_id(),
                             mac, VM.get_status().get_state()])
 
-        self.write_object_to_file("names", names)
+        self.write_object_to_file("vm_names", names)
         if self.machine_readable is True:
             return vm_info
         table = tabulate(vm_info, ["name", "ip", "id", "mac address", "state"])
@@ -244,8 +248,11 @@ class Get(remote_operation_object):
         for host in self.api.hosts.list():
             tmp_host_info = list()
             host_name = host.get_name()
-            if host.get_storage_manager().get_valueOf_() == 'true':
-                host_name += ' (spm)'
+            try:
+                if host.get_storage_manager().get_valueOf_() == 'true':
+                    host_name += ' (spm)'
+            except Exception:
+                pass
             hosts_names += ''.join(host.get_name()+' ')
             tmp_host_info.append(host_name)
             tmp_host_info.append(host.get_address())
@@ -288,8 +295,8 @@ class Get(remote_operation_object):
                             str(ver.get_major())+'.'+str(ver.get_minor()),
                             dc.get_id(), dc.get_status().get_state()])
 
-        self.write_object_to_file('%s/dc_names' % "/tmp", dc_names)
-        self.write_object_to_file('%s/cluster_names' % "/tmp", cluster_names_)
+        self.write_object_to_file('dc_names', dc_names)
+        self.write_object_to_file('cluster_names', cluster_names_)
         if self.machine_readable is True:
             return dc_info
         table = tabulate(dc_info, ["name", "cluster", "release", "id",
@@ -319,7 +326,7 @@ class Get(remote_operation_object):
                 sd_info.append([sd_name, sd.get_type(),
                                 sd.get_storage().get_type(), '-',
                                 sd.get_id(), sd.get_status().get_state()])
-        self.write_object_to_file('%s/domain_names' % ("/tmp"), domain_names)
+        self.write_object_to_file('domain_names', domain_names)
         if self.machine_readable is True:
             return sd_info
         table = tabulate(sd_info, ["name", "type", "storage", "datacenter",

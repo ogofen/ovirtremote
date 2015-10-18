@@ -10,12 +10,12 @@ class ovirt_remote_base(object):
         self.path = "/etc/ovirt-remote"
 
     def write_object_to_file(self, path, obj):
-        file = open(path, 'w')
+        file = open("/tmp/"+path, 'w')
         file.write(obj)
 
-    def collect_params(self, setup):
+    def collect_params(self, setup, confile):
         parser = SafeConfigParser()
-        parser.read('/etc/ovirt-remote.conf')
+        parser.read('/etc/ovirt-remote/%s.conf' % confile)
         s = dict()
         try:
             s['url'] = parser.get(setup, 'url').encode('ascii')
@@ -55,11 +55,6 @@ class ovirt_remote_base(object):
         except Exception:
             pass
         try:
-            s['h'] = parser.get(setup, 'servers_password').encode('ascii')
-            s['hypervisor_password'] = s['h']
-        except Exception:
-            pass
-        try:
             s['password'] = parser.get(setup, 'password').encode('ascii')
         except Exception:
             pass
@@ -82,8 +77,7 @@ class remote_operation_object(ovirt_remote_base):
     def __init__(self, setup, machine_readable):
         super(remote_operation_object, self).__init__()
         self.machine_readable = machine_readable
-        self.setup = self.collect_params(setup)
-        self.hypervisor_password = self.setup['hypervisor_password']
+        self.setup = self.collect_params(setup, "ovirt-remote")
         try:
             self.api = API(url=self.setup['url'],
                            password=self.setup['password'],
