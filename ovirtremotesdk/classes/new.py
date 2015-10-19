@@ -147,7 +147,8 @@ class New(remote_operation_object):
         return self.api.disks.add(disk)
 
     def disk(self, disk_name, domain_name, bootable=False, size=8,
-             interface='virtio', sparse=True, format='raw', vm=None):
+             interface='virtio', sparse=True, format='raw', shareable=False,
+             vm=None):
         """ create a new Vdisk """
 
         (sd, dc) = self.get_sd_dc_objects(domain_name)
@@ -155,7 +156,7 @@ class New(remote_operation_object):
         disk = params.Disk(storage_domains=params.StorageDomains
                            (storage_domain=[sd]), size=size, type_='data',
                            interface=interface, format=format,
-                           bootable=bootable, sparse=sparse,
+                           bootable=bootable, sparse=sparse, shareable=False,
                            name=disk_name)
         if sd.get_type() == 'volume':
             cinder = self.api.openstackvolumeproviders.get('cinder')

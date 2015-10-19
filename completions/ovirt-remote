@@ -58,7 +58,7 @@ _ovirt-remote()
       return 0
       ;;
     domain)
-      COMPREPLY=( $(compgen -W "$iscsi $fcp $nfs" -- ${cur}) )
+      COMPREPLY=( $(compgen -W "$iscsi $fcp $nfs $openstackvolumeprovider" -- ${cur}) )
       return 0
       ;;
     nfs-domain)
