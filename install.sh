@@ -19,7 +19,11 @@ is_sdk=`rpm -qa | grep "sdk-python"`
   then
     yum install python-devel -y
   fi
-
+  is_bpython=`rpm -qa | grep "bpython"`
+  if ! [ "$is_bpython" ]
+  then
+    yum install bpython -y
+  fi
   is_pip=`rpm -qa | grep "python-pip"`
   if ! [ "$is_pip" ]
   then
@@ -46,12 +50,22 @@ is_sdk=`rpm -qa | grep "sdk-python"`
     pip install configparser
   fi
   cp -rf ovirtremotesdk $path
+  mkdir $etc_path 2>/dev/null 
+  if ! [ -f /etc/ovirt-remote/domain.conf ]
+  then
+    cp domain.conf /etc/ovirt-remote/
+  fi
+  if ! [ -f /etc/ovirt-remote/hypervisors.conf ]
+  then
+    cp hypervisors.conf /etc/ovirt-remote/
+  fi
   if ! [ -f /etc/ovirt-remote/ovirt-remote.conf ]
   then
     cp ovirt-remote.conf /etc/ovirt-remote/
   fi
   chmod +x scripts/ovirt-remote
   cp scripts/ovirt-remote /usr/bin/
+  cp scripts/ovirt_watch_vm_up.py $etc_path
   if [ -d /usr/share/zsh/site-functions/ ]
   then
     cp completions/_ovirt_remote /usr/share/zsh/site-functions/

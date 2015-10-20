@@ -4,9 +4,11 @@ nfs=`sed 's/\[/''/g;s/\]/''/g' <<< $(cat /etc/ovirt-remote/domain.conf | grep -B
 iscsi=`sed 's/\[/''/g;s/\]/''/g' <<< $(cat /etc/ovirt-remote/domain.conf | grep -B 2 type=iscsi | grep '\[')`
 fcp=`sed 's/\[/''/g;s/\]/''/g' <<< $(cat /etc/ovirt-remote/domain.conf | grep -B 2 type=fcp | grep '\[')`
 openstackvolumeprovider=`sed 's/\[/''/g;s/\]/''/g' <<< $(cat /etc/ovirt-remote/domain.conf | grep -B 2 type=openstack_volume_provider | grep '\[')`
+os_types=`sed 's/\[/''/g;s/\]/''/g' <<< $(cat /etc/ovirt-remote/os.conf | grep '\[')`
 export nfs
 export iscsi
 export fcp
+export os_types
 export openstackvolumeprovider
 export hosts_names
 export setups
@@ -19,16 +21,6 @@ if [ -f  /tmp/vm_address ]
   then
 vm_address=`cat /tmp/vm_address`
 export vm_address
-fi
-if [ -f  /tmp/os_types ]
-  then
-os_types=`cat /tmp/os_types`
-export os_types
-fi
-if [ -f  /tmp/domain_names ]
-  then
-domain_names=`cat /tmp/domain_names`
-export domain_names
 fi
 if [ -f  /tmp/luns_id ]
   then
@@ -44,9 +36,4 @@ if [ -f  /tmp/cluster_names ]
   then
 cluster_names=`cat /tmp/cluster_names`
 export cluster_names
-fi
-if [ -f  /tmp/os_types ]
-  then
-os_types=`cat /tmp/os_types`
-export os_types
 fi

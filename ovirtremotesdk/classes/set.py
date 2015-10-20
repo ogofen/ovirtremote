@@ -1,5 +1,4 @@
 from time import sleep
-import sys
 import os
 from configparser import SafeConfigParser
 from ovirtremotesdk.classes.hosts import Host
@@ -31,7 +30,8 @@ class Set(remote_operation_object):
             return False
         return os_dict
 
-    def exec_cmd(self, string, options):
+    def exec_cmd(self, argv, options):
+        string = argv[0]
         if string == 'domain_state':
             return self.domain_state(options.domain, options.state)
         if string == 'iscsi_login':
@@ -44,30 +44,36 @@ class Set(remote_operation_object):
         if string == 'guestagent':
             return self.guestagent(options.vm_address, options.password)
         if string == 'operating_system':
-            return self.operating_system(options.vm, options.type)
+            return self.operating_system(options.vm, argv[1])
         if string == 'attach_disk':
             return self.attach_disk(options.vm, options.disk)
 
-    def engine_child(self, vm):
-        engine_url = self.setup['url'].rstrip('/api')
-        engine_url = engine_url.rsplit('https://')[1]
+    def watch_vm_up(self, vm_name):
+        vm = self.api.vms.get(vm_name)
+        host = vm.get_host()
+        host = self.api.hosts.get(id=host.get_id())
+        address = host.get_address()
+        password = self.collect_params(host.get_name(),
+                                       'hypervisors')['password']
         try:
-            r_engine = Host(engine_url, self.hypervisor_password)
-        except Exception:
+            r_host = Host(address, password)
+        except Exception, e:
+            print e
             return 1
         path_to_file = self.path+'/ovirt_watch_vm_up.py'
         dest_path = '/root/ovirt_watch_vm_up.py'
         try:
-            r_engine.put_file(path_to_file, '/root/ovirt_watch_vm_up.py')
+            r_host.put_file(path_to_file, '/root/ovirt_watch_vm_up.py')
         except Exception:
             return 1
         sleep(1)
         try:
-            r_engine.run_bash_command('python %s %s %s' %
-                                      (dest_path, self.setup['password'],
-                                       vm.get_name()))
+            r_host.run_bash_command('python %s %s %s' %
+                                    (dest_path, password,
+                                     vm.get_name()))
         except Exception:
             return 1
+        return 0
 
     def domain_state(self, domainname, state):
         """ change domain's mode to maintainance or detach or activate """
@@ -91,10 +97,10 @@ class Set(remote_operation_object):
             return 1
         return 0
 
-    def attach_disk(self, vmname, diskname):
-        vm = self.api.vms.get(vmname)
+    def attach_disk(self, vm_name, diskname):
+        vm = self.api.vms.get(vm_name)
         if vm is None:
-            print "VM %s was not found" % (vmname)
+            print "VM %s was not found" % (vm_name)
             return 1
         disk = self.api.disks.get(diskname)
         vm.disks.add(disk)
@@ -116,7 +122,9 @@ class Set(remote_operation_object):
         host = self.api.hosts.get(id=host.get_id())
         try:
             print "host is %s" % host.get_name()
-            r_host = Host(host.get_address(), self.hypervisor_password)
+            password = self.collect_params(host.get_name(),
+                                           'hypervisors')['password']
+            r_host = Host(host.get_address(), password)
         except Exception, e:
             print e
             return 1
@@ -142,8 +150,8 @@ class Set(remote_operation_object):
         self.write_object_to_file('os_types', os_types)
         return os_types.replace(' ', '\n')
 
-    def operating_system(self, vmname, os_type):
-        vm = self.api.vms.get(vmname)
+    def operating_system(self, vm_name, os_type):
+        vm = self.api.vms.get(vm_name)
         os_info = self.collect_os(os_type)
         if os_type is None or os_info is False:
             os_types = self.return_os_types()
@@ -160,7 +168,7 @@ class Set(remote_operation_object):
         print "preppering hypervisor for VM's os installation"
         host = self.select_host_on_cluster(vm, os_dest, os_info)
         print "hypervisor preppered"
-        vm = self.api.vms.get(vmname)
+        vm = self.api.vms.get(vm_name)
         network = params.Network(name=self.api.networks.list()[0].get_name())
         nic = params.NIC(name='eth0', network=network, interface='virtio')
         if len(vm.nics.list()) == 0:
@@ -183,23 +191,29 @@ class Set(remote_operation_object):
         action = params.Action(vm=vstart)
         vm.get_placement_policy().set_host(host)
         vm.update()
+
         try:
             vm.start(action)
         except Exception, e:
             print "operation failed, %s" % e
             return 1
-        Ref = os.fork()
-        if Ref == 0:
-            print "child %s" % Ref
-            sys.exit(self.engine_child(vm))
-        else:
-            print "father %s" % Ref
-            return 0
+        sleep(150)
+        vm = self.api.vms.get(vm_name)
+        while vm.get_status().get_state() == 'up':
+            sleep(1)
+            vm = self.api.vms.get(vm_name)
+        vm.stop()
+        vm = self.api.vms.get(vm_name)
+        while vm.get_status().get_state() != 'down':
+            sleep(1)
+            vm = self.api.vms.get(vm_name)
+        vm.start()
+        return 0
 
-    def vm_state(self, vmname, state):
+    def vm_state(self, vm_name, state):
         """ stop or start a vm """
 
-        vm = self.api.vms.get(vmname)
+        vm = self.api.vms.get(vm_name)
         if state == 'up':
             try:
                 vm.start()
@@ -220,7 +234,9 @@ class Set(remote_operation_object):
         h1.iscsilogin(login)
 
     def ini_host(self, host, os_dest, os_info):
-        remote_host = Host(host.get_address(), self.hypervisor_password)
+        password = self.collect_params(host.get_name(),
+                                       'hypervisors')['password']
+        remote_host = Host(host.get_address(), password)
         if not remote_host.has_file(os_info['kernel']):
             remote_host.wget_file(os_dest['kernel'], os_info['kernel'])
             sleep(5)
@@ -231,7 +247,7 @@ class Set(remote_operation_object):
         """ install guestagent on a vm """
         ip = vm_address
         if password is None:
-            password = self.hypervisor_password
+            password = 'qum5net'
         try:
             paramiko_vm = Host(ip, password)
         except Exception:

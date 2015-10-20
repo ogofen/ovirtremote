@@ -19,7 +19,7 @@ class New(remote_operation_object):
             return self.filedomain(argv[1], 'nfs', options.datacenter,
                                    options.address, options.path)
         if string == 'vm':
-            return self.vm(options.vm, options.cluster)
+            return self.vm(options.name, options.cluster)
         if string == 'openstack_volume_provider':
             return self.openstack_volume_provider(argv[1], options.datacenter)
         if string == 'disk':
@@ -36,9 +36,9 @@ class New(remote_operation_object):
         if string == 'import_file':
             return self.importfile
         if string == 'datacenter':
-            return self.datacenter(options.datacenter, options.version)
+            return self.datacenter(options.name, options.version)
         if string == 'cluster':
-            return self.cluster(options.cluster, options.datacenter)
+            return self.cluster(options.name, options.datacenter)
         if string == 'host':
             return self.host(argv[1], options.address, options.password,
                              options.cluster)
@@ -243,7 +243,7 @@ class New(remote_operation_object):
         sd = self.api.storagedomains.get(domain_name)
         dc.storagedomains.add(sd)
         sleep(5)
-        cinder_sd = self.api.openstackvolumeproviders.get(cinder['name'])
+        cinder_sd = self.api.openstackvolumeproviders.get(domain_name)
         secret = params.OpenstackVolumeAuthenticationKey()
         secret.set_uuid(cinder['uuid'])
         secret.set_id(cinder['uuid'])

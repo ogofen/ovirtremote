@@ -32,13 +32,15 @@ class Get(remote_operation_object):
             return self.sdinfo()
         if string == 'disks_info':
             return self.disksinfo()
-        if string == 'vm_info':
+        if string == 'vm_os_and_ip':
             return self.vm_inquiry(argv[1], options.password)
 
     def select_host_from_cluster(self, cluster):
         for host in self.api.hosts.list():
             if host.get_cluster().get_id() == cluster:
-                r_host = Host(host.get_address(), self.hypervisor_password)
+                password = self.collect_params(host.get_name(),
+                                               'hypervisors')['password']
+                r_host = Host(host.get_address(), password)
                 if not r_host.has_file('/give_mac_return_ip'):
                     r_host.__del__()
                     self.ini_host(host)
@@ -115,7 +117,8 @@ class Get(remote_operation_object):
         return table
 
     def ini_host(self, host):
-        remote_host = Host(host.get_address(), self.hypervisor_password)
+        password = self.collect_params(host.get_name(), 'hypervisors')['password']
+        remote_host = Host(host.get_address(), password)
         src_1 = "%s/give_mac_return_ip" % (self.path)
         dest_1 = "/give_mac_return_ip"
         try:
@@ -130,8 +133,9 @@ class Get(remote_operation_object):
         host = self.api.hosts.get(hostname)
         mac = vm.nics.list()[0].get_mac().get_address()
         bridge = self.api.networks.list()[0].get_name()
+        password = self.collect_params(host.get_name(), 'hypervisors')['password']
         try:
-            r_host = Host(host.get_address(), self.hypervisor_password)
+            r_host = Host(host.get_address(), password)
         except Exception, e:
             return e
         cmd = '/give_mac_return_ip -m %s -i %s' % (mac, bridge)
@@ -139,14 +143,15 @@ class Get(remote_operation_object):
         return out[out.find('Acquired IP:')+13:].rstrip()
 
     def vm_inquiry(self, vmname, password=None):
-        if password is None:
-            password = self.hypervisor_password
         vm = self.api.vms.get(vmname)
         if vm is None:
             print "No VM \"%s\" was found" % (vmname)
             return 1
         cluster = vm.get_cluster()
         host = self.select_host_from_cluster(cluster.get_id())
+        if password is None:
+            password = self.collect_params(host.get_name(),
+                                           'hypervisors')['password']
         try:
             ip = self.vm_ip(vmname, host.get_name())
         except Exception:
