@@ -144,7 +144,7 @@ _ovirt-remote()
       return 0
       ;;
     vm_and_bootable_disk)
-      COMPREPLY=( $(compgen -W "--vmname --cluster --domain" -- ${cur}) )
+      COMPREPLY=( $(compgen -W "--vm_name --cluster --domain" -- ${cur}) )
       return 0
       ;;
     vm)
