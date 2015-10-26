@@ -70,6 +70,21 @@ class ovirt_remote_base(object):
             s['luns'] = parser.get(setup, 'luns').encode('ascii')
         except Exception:
             pass
+        try:
+            s['ks'] = parser.get(setup, 'ks').encode('ascii')
+        except Exception:
+            pass
+        try:
+            s['initrd'] = parser.get(setup, 'initrd').encode('ascii')
+        except Exception:
+            pass
+        try:
+            s['kernel'] = parser.get(setup, 'kernel').encode('ascii')
+        except Exception:
+            pass
+
+
+
         return s
 
 

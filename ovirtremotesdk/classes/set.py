@@ -18,18 +18,6 @@ class Set(remote_operation_object):
     def __str__(self):
         return "set"
 
-    def collect_os(self, _os):
-        parser = SafeConfigParser()
-        parser.read('/etc/ovirt-remote.conf')
-        os_dict = dict()
-        try:
-            os_dict['ks'] = parser.get(_os, 'ks')
-            os_dict['kernel'] = parser.get(_os, 'kernel')
-            os_dict['initrd'] = parser.get(_os, 'initrd')
-        except Exception:
-            return False
-        return os_dict
-
     def exec_cmd(self, argv, options):
         string = argv[0]
         if string == 'domain_state':
@@ -141,22 +129,11 @@ class Set(remote_operation_object):
             sleep(1)
         return host
 
-    def return_os_types(self):
-        out = os.popen('cat /etc/ovirt-remote.conf | grep "^\[[R,F].*-"')
-        os_types = out.read()
-        os_types = os_types.replace('\n', ' ')
-        os_types = os_types.replace('[', '')
-        os_types = os_types.replace(']', '')
-        self.write_object_to_file('os_types', os_types)
-        return os_types.replace(' ', '\n')
-
     def operating_system(self, vm_name, os_type):
         vm = self.api.vms.get(vm_name)
-        os_info = self.collect_os(os_type)
+        os_info = self.collect_params(os_type, 'os')
         if os_type is None or os_info is False:
-            os_types = self.return_os_types()
-            print "specify correct os type:\n%s" % (os_types)
-            self.write_object_to_file('os_types', os_types)
+            print "specify correct os type"
             return 1
         kernel = "%s/%s%s" % (self.image_path, os_type,
                               "-x86_64-vmlinuz")
