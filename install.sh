@@ -59,11 +59,10 @@ is_sdk=`rpm -qa | grep "sdk-python"`
   then
     cp hypervisors.conf /etc/ovirt-remote/
   fi
-  if ! [ -f /etc/ovirt-remote/os.conf]
+  if ! [ -f /etc/ovirt-remote/os.conf ]
   then
     cp os.conf /etc/ovirt-remote/
   fi
-
   if ! [ -f /etc/ovirt-remote/ovirt-remote.conf ]
   then
     cp ovirt-remote.conf /etc/ovirt-remote/

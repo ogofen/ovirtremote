@@ -159,7 +159,7 @@ class New(remote_operation_object):
                            bootable=bootable, sparse=sparse, shareable=False,
                            name=disk_name)
         if sd.get_type() == 'volume':
-            cinder = self.api.openstackvolumeproviders.get('cinder')
+            cinder = self.api.openstackvolumeproviders.list()[0]
             vol_type = cinder.volumetypes.get('ceph')
             disk.set_openstack_volume_type(vol_type)
         if vm is None:
