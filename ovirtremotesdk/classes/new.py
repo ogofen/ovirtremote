@@ -127,22 +127,20 @@ class New(remote_operation_object):
         domain = 'iso-domain'
         return self.filedomain(domain, datacenter, address, path, type)
 
-    def direct_lun(self):
+    def direct_lun(self, name, lun, _type, interface ):
         """ create a new dlun """
-        options = self.options
         luns = list()
         storage_connections = self.api.storageconnections.list()
         for connection in storage_connections:
-            if connection.get_type() == options.type:
+            if connection.get_type() == _type:
                 break
-        id = options.luns
-        storage = params.Storage(type_=options.type)
-        lun = params.LogicalUnit(id=id, address=connection.get_address(),
+        storage = params.Storage(type_=_type)
+        lun = params.LogicalUnit(id=lun, address=connection.get_address(),
                                  port=3260, target=connection.get_target())
         luns.append(lun)
         storage.set_logical_unit(luns)
-        disk = params.Disk(type_='data', interface=options.interface,
-                           bootable=options.bootable, name=options.disk)
+        disk = params.Disk(type_='data', interface=interface,
+                           bootable=options.bootable, name=name)
         disk.set_lun_storage(storage)
         return self.api.disks.add(disk)
 
