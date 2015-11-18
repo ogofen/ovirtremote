@@ -37,7 +37,7 @@ _ovirt-remote()
       COMPREPLY=( $(compgen -W "$vm_names" -- ${cur}) )
       return 0
       ;;
-    vm_os_and_ip)
+    vm_ip_and_os)
       COMPREPLY=( $(compgen -W "$vm_names" -- ${cur}) )
       return 0
       ;;
@@ -54,7 +54,7 @@ _ovirt-remote()
       return 0
       ;;
     get)
-      COMPREPLY=( $(compgen -W "block_storage_span hosts_info all_vms_info vm_os_and_ip iqns_discovery domains_info datacenters_info disks_info" ${cur}) )
+      COMPREPLY=( $(compgen -W "block_storage_span hosts_info vms_info_list vm_ip_and_os iqns_discovery domains_info datacenters_info disks_info" ${cur}) )
       return 0
       ;;
     iscsi-domain)

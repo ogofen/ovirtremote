@@ -107,7 +107,7 @@ class Delete(remote_operation_object):
         return 'successful'
 
     def disk(self, disk_name):
-        """ removes a domain """
+        """ removes a virtual disk"""
 
         disk = self.api.disks.get(disk_name)
         disk.delete()

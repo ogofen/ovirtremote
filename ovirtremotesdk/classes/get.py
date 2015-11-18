@@ -22,8 +22,8 @@ class Get(remote_operation_object):
             return self.block_storage_span(argv[1], True)
         if string == 'hosts_info':
             return self.hostsinfo()
-        if string == 'all_vms_info':
-            return self.vmsinfo()
+        if string == 'vms_info_list':
+            return self.vms_info_list()
         if string == 'iqns_discovery':
             return self.showiqn(options.address, options.host)
         if string == 'datacenters_info':
@@ -32,8 +32,8 @@ class Get(remote_operation_object):
             return self.sdinfo()
         if string == 'disks_info':
             return self.disksinfo()
-        if string == 'vm_os_and_ip':
-            return self.vm_inquiry(argv[1], options.password)
+        if string == 'vm_ip_and_os':
+            return self.vm_ip_and_os(argv[1], options.password)
 
     def select_host_from_cluster(self, cluster):
         for host in self.api.hosts.list():
@@ -142,7 +142,7 @@ class Get(remote_operation_object):
         out = r_host.run_bash_command(cmd)
         return out[out.find('Acquired IP:')+13:].rstrip()
 
-    def vm_inquiry(self, vmname, password=None):
+    def vm_ip_and_os(self, vmname, password=None):
         vm = self.api.vms.get(vmname)
         if vm is None:
             print "No VM \"%s\" was found" % (vmname)
@@ -160,7 +160,8 @@ class Get(remote_operation_object):
         try:
             r_vm = Host(ip, password)
         except Exception, e:
-            print "Vm is running on %s, paramiko failed to return os" % (ip)
+            print "Failed to open ssh session at address: %s." % (ip)
+            print "Verify that guest is up and pingable from this machine.\n"
             self.write_object_to_file("vm_address", ip)
             return e
         os_info = r_vm.return_os()
@@ -172,7 +173,7 @@ class Get(remote_operation_object):
         print "VM os = \'%s %s\'" % (os_info[0], os_info[1])
         print "VM ip = %s" % ip
 
-    def vmsinfo(self):
+    def vms_info_list(self):
         """ list all VM's and their ips """
         vm_info = list()
         names = ''

@@ -82,9 +82,6 @@ class ovirt_remote_base(object):
             s['kernel'] = parser.get(setup, 'kernel').encode('ascii')
         except Exception:
             pass
-
-
-
         return s
 
 

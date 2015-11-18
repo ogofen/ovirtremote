@@ -116,17 +116,6 @@ class New(remote_operation_object):
         newsd = self.api.storagedomains.add(sd)
         return dc.storagedomains.add(newsd)
 
-    def iso_domain(self, datacenter, address, path, type):
-        with open('/etc/ovirt-remote.conf', 'r') as f:
-            line = f.readline()
-            line = f.readline()
-            address = line[line.find('=')+1:-1]
-            line = f.readline()
-            path = line[line.find('=')+1:-1]
-        type = 'iso'
-        domain = 'iso-domain'
-        return self.filedomain(domain, datacenter, address, path, type)
-
     def direct_lun(self, name, lun, _type, interface ):
         """ create a new dlun """
         luns = list()

@@ -7,7 +7,7 @@ from ovirtremotesdk.classes.ovirtremoteobject import remote_operation_object
 
 
 class OvirtRemote(remote_operation_object):
-    def __init__(self, setup, machine_readable=True):
+    def __init__(self, setup, machine_readable=False):
         super(OvirtRemote, self).__init__(setup, machine_readable)
         self.new = New(setup, machine_readable)
         self.delete = Delete(setup, machine_readable)

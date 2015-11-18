@@ -229,6 +229,7 @@ class Set(remote_operation_object):
             paramiko_vm = Host(ip, password)
         except Exception:
             print "ssh session failed on %s" % (ip)
+            return 1
         src_1 = "%s/guest.sh" % (self.path)
         dst_1 = "/root/guest.sh"
         install_guest_agent = "sh /root/guest.sh"
