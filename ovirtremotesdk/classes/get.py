@@ -42,7 +42,6 @@ class Get(remote_operation_object):
                                                'hypervisors')['password']
                 r_host = Host(host.get_address(), password)
                 if not r_host.has_file('/give_mac_return_ip'):
-                    r_host.__del__()
                     self.ini_host(host)
                 return host
 
@@ -126,7 +125,6 @@ class Get(remote_operation_object):
             remote_host.run_bash_command('chmod +x %s' % dest_1)
         except Exception as e:
             print e
-        remote_host.__del__()
 
     def vm_ip(self, vmname, hostname):
         vm = self.api.vms.get(vmname)
@@ -166,7 +164,6 @@ class Get(remote_operation_object):
             return e
         os_info = r_vm.return_os()
         self.write_object_to_file("vm_address", ip)
-        r_vm.__del__()
         if self.machine_readable is True:
             return vm.get_name, os_info, ip
         print "VM name = \'%s\'" % vm.get_name()

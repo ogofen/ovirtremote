@@ -4,22 +4,26 @@ import re
 
 
 class Host(object):
-    def __init__(self, address, psswd):
+    def __init__(self, address, passwd):
+        self.address = address
+        self.passwd = passwd
+
+    def start_session(self, address, psswd):
         try:
-            self.ssh = paramiko.SSHClient()
-            self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            self.ssh.connect(hostname=address,
+            tmp_ssh = paramiko.SSHClient()
+            tmp_ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            tmp_ssh.connect(hostname=address,
                              username='root',
                              password=psswd, timeout=15)
         except Exception, e:
             return e
-
-    def __del__(self):
-        self.ssh.close()
+        return tmp_ssh
 
     def run_bash_command(self, bash_command):
-        stdin, stdout, stderr = self.ssh.exec_command(bash_command)
+        parm_host = self.start_session(self.address, self.passwd)
+        stdin, stdout, stderr = parm_host.exec_command(bash_command)
         output = stdout.read()
+        parm_host.close()
         return output
 
     def return_os(self):
@@ -70,26 +74,31 @@ class Host(object):
         self.run_bash_command(cmd)
 
     def has_file(self, path):
-        ftp = self.ssh.open_sftp()
+        parm_host = self.start_session(self.address, self.passwd)
+        ftp = parm_host.open_sftp()
         try:
             ftp.lstat(path)
         except Exception:
             ftp.close()
             return False
         ftp.close()
+        parm_host.close()
         return True
 
     def delete_file(self, path):
-        ftp = self.ssh.open_sftp()
+        parm_host = self.start_session(self.address, self.passwd)
+        ftp = parm_host.open_sftp()
         ftp.remove(path)
         ftp.close()
+        parm_host.close()
 
     def restart_services(self, service):
         cmd = "systemctl restart %s" % service
         self.run_bash_command(cmd)
 
     def fix_kickstart(self, dest):
-        ftp = self.ssh.open_sftp()
+        parm_host = self.start_session(self.address, self.passwd)
+        ftp = parm_host.open_sftp()
         file = ftp.open(dest, 'r')
         filedata = file.read()
         fix = filedata.replace('reboot', 'shutdown')
@@ -99,9 +108,12 @@ class Host(object):
         file.close()
         sleep(5)
         ftp.close()
+        parm_host.close()
 
     def put_file(self, localpath, remotepath):
-        ftp = self.ssh.open_sftp()
+        parm_host = self.start_session(self.address, self.passwd)
+        ftp = parm_host.open_sftp()
         ftp.put(localpath, remotepath)
         sleep(5)
         ftp.close()
+        parm_host.close()
