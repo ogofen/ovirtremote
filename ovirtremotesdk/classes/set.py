@@ -32,7 +32,7 @@ class Set(remote_operation_object):
         if string == 'guestagent':
             return self.guestagent(options.vm_address, options.password)
         if string == 'operating_system':
-            return self.operating_system(options.vm, argv[1])
+            return self.operating_system(argv[2], argv[1])
         if string == 'attach_disk':
             return self.attach_disk(options.vm, options.disk)
 

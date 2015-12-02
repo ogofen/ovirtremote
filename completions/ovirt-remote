@@ -116,7 +116,7 @@ _ovirt-remote()
       return 0
       ;;
     operating_system)
-      COMPREPLY=( $(compgen -W "--vm_name" -- ${cur}) )
+      COMPREPLY=( $(compgen -W "$vm_names" -- ${cur}) )
       return 0
       ;;
     iscsi_login)
