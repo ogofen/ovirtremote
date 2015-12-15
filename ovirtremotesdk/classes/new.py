@@ -172,6 +172,14 @@ class New(remote_operation_object):
         disk_name = vm_name + "_Disk_1"
         bootable = True
         vm = self.vm(vm_name, cluster)
+        sd = self.api.storagedomains.get(domain_name)
+        if sd is None:
+            print "Storage domain does not exist"
+            return
+        type = sd.get_storage().get_type()
+        if type == 'iscsi' or type == 'fcp':
+            disk = self.disk(disk_name, domain_name, bootable, vm=vm, format='cow')
+            return vm, disk
         disk = self.disk(disk_name, domain_name, bootable, vm=vm)
         return vm, disk
 

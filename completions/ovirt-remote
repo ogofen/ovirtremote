@@ -21,30 +21,6 @@ _ovirt-remote()
 	  start_bpython)
       return 0
       ;;
-    host)
-      COMPREPLY=( $(compgen -W "$hosts_names" -- ${cur}) )
-      return 0
-      ;;
-	  set)
-      COMPREPLY=( $(compgen -W "iscsi_login domain vm host guestagent operating_system attach_disk" ${cur}) )
-      return 0
-      ;;
-	  guestagent)
-      COMPREPLY=( $(compgen -W "--password --vm_address" -- ${cur}) )
-      return 0
-      ;;
-    --vm_name)
-      COMPREPLY=( $(compgen -W "$vm_names" -- ${cur}) )
-      return 0
-      ;;
-    vm_ip_and_os)
-      COMPREPLY=( $(compgen -W "$vm_names" -- ${cur}) )
-      return 0
-      ;;
-    openstack_volume_provider)
-      COMPREPLY=( $(compgen -W "$openstackvolumeprovider" -- ${cur}) )
-      return 0
-      ;;
     delete)
       COMPREPLY=( $(compgen -W "vm domain host cluster all_vms_and_disks" ${cur}) )
       return 0
@@ -59,10 +35,6 @@ _ovirt-remote()
       ;;
     iscsi-domain)
       COMPREPLY=( $(compgen -W "$iscsi" -- ${cur}) )
-      return 0
-      ;;
-    domain)
-      COMPREPLY=( $(compgen -W "$iscsi $fcp $nfs $openstackvolumeprovider" -- ${cur}) )
       return 0
       ;;
     --domain)
@@ -97,10 +69,38 @@ _ovirt-remote()
       COMPREPLY=( $(compgen -W "$os_types" -- ${cur}) )
       return 0
       ;;
+	  set)
+      COMPREPLY=( $(compgen -W "iscsi_login domain vm host guestagent operating_system attach_disk" ${cur}) )
+      return 0
+      ;;
     esac
    case "$command" in
+   host)
+      COMPREPLY=( $(compgen -W "$hosts_names up maintenance reinstall confirm_has_been_rebooted" -- ${cur}) )
+      return 0
+      ;;
+	  guestagent)
+      COMPREPLY=( $(compgen -W "--password --vm_address" -- ${cur}) )
+      return 0
+      ;;
+    --vm_name)
+      COMPREPLY=( $(compgen -W "$vm_names" -- ${cur}) )
+      return 0
+      ;;
+    vm_ip_and_os)
+      COMPREPLY=( $(compgen -W "$vm_names" -- ${cur}) )
+      return 0
+      ;;
+    openstack_volume_provider)
+      COMPREPLY=( $(compgen -W "$openstackvolumeprovider" -- ${cur}) )
+      return 0
+      ;;
     openstack_volume_provider)
       COMPREPLY=( $(compgen -W "--datacenter" -- ${cur}) )
+      return 0
+      ;;
+    domain)
+      COMPREPLY=( $(compgen -W "$iscsi $fcp $nfs $openstackvolumeprovider maintenance detach up " -- ${cur}) )
       return 0
       ;;
     datacenter)
@@ -148,7 +148,7 @@ _ovirt-remote()
       return 0
       ;;
     vm)
-      COMPREPLY=( $(compgen -W "--state --cluster --name" -- ${cur}) )
+      COMPREPLY=( $(compgen -W "$vm_names poweroff up reboot" -- ${cur}) )
       return 0
       ;;
     guestagent)

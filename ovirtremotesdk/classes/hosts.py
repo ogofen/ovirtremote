@@ -1,6 +1,7 @@
 import paramiko
 from time import sleep
 import re
+import sys
 
 
 class Host(object):
@@ -15,8 +16,10 @@ class Host(object):
             tmp_ssh.connect(hostname=address,
                              username='root',
                              password=psswd, timeout=15)
-        except Exception, e:
-            return e
+        except Exception:
+            print "Failed to open 'SSH session' to machine %s" % address
+            tmp_ssh.close()
+            sys.exit()
         return tmp_ssh
 
     def run_bash_command(self, bash_command):

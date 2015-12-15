@@ -20,15 +20,15 @@ class Set(remote_operation_object):
 
     def exec_cmd(self, argv, options):
         string = argv[0]
-        if string == 'domain_state':
-            return self.domain_state(options.domain, options.state)
+        if string == 'domain':
+            return self.domain_state(argv[1], argv[2])
         if string == 'iscsi_login':
             return self.iscsilogin(options.host, options.address,
                                    options.target)
-        if string == 'vm_state':
-            return self.vm_state(options.vm, options.state)
-        if string == 'host_state':
-            return self.host_state(options.host, options.state)
+        if string == 'vm':
+            return self.vm_state(argv[1], argv[2])
+        if string == 'host':
+            return self.host_state(argv[1], argv[2])
         if string == 'guestagent':
             return self.guestagent(options.vm_address, options.password)
         if string == 'operating_system':
@@ -71,13 +71,13 @@ class Set(remote_operation_object):
                 sd.deactivate()
             except Exception, e:
                 print e
-        elif state == 'unattached':
+        elif state == 'detach':
             sd.deactivate()
             while sd.get_status().get_state() != 'maintenance':
                 sleep(2)
                 sd = dc.storagedomains.get(domainname)
             sd.delete()
-        elif state == 'active':
+        elif state == 'up':
             sd.activate()
         else:
             print "operation Failed, option: \"--state\" is needed" \
@@ -196,9 +196,14 @@ class Set(remote_operation_object):
                 vm.start()
             except Exception, e:
                 print e
-        else:
+        if state == 'poweroff':
             try:
                 vm.stop()
+            except Exception, e:
+                print e
+        if state == 'reboot':
+            try:
+                vm.reboot()
             except Exception, e:
                 print e
 
@@ -256,3 +261,14 @@ class Set(remote_operation_object):
                 h1.deactivate()
             except Exception, e:
                 print e
+        elif state == 'reinstall':
+            try:
+                h1.reinstall()
+            except Exception, e:
+                print e
+        elif state == 'reboot':
+            try:
+                h1.reboot()
+            except Exception, e:
+                print e
+
