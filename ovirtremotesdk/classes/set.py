@@ -247,6 +247,19 @@ class Set(remote_operation_object):
         print "guestagent has been deployed"
         return 0
 
+    def all_vms_with_guestagent(self, default_password):
+        """ installs guestagent on all available vms """
+        vms_list = self.api.vms.list()
+        for vm in vms_list:
+            vmname = vm.get_name()
+            cluster = vm.get_cluster()
+            host = self.select_host_from_cluster(cluster.get_id())
+            try:
+                ip = self.vm_ip(vmname, host.get_name())
+            except Exception:
+                pass
+            self.guestagent(ip, default_password)
+
     def host_state(self, hostname, state):
         """ stop or start a vm """
 

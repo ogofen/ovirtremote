@@ -1,5 +1,6 @@
 #!/usr/bin/python
 from ovirtsdk.api import API
+from hosts import Host
 from configparser import SafeConfigParser
 import sys
 
@@ -107,3 +108,29 @@ class remote_operation_object(ovirt_remote_base):
         dc = self.api.datacenters.get(id=dc.get_id())
         sd = dc.storagedomains.get(domain)
         return sd, dc
+
+    def vm_ip(self, vmname, hostname):
+        vm = self.api.vms.get(vmname)
+        host = self.api.hosts.get(hostname)
+        mac = vm.nics.list()[0].get_mac().get_address()
+        bridge = self.api.networks.list()[0].get_name()
+        password = self.collect_params(host.get_name(), 'hypervisors')['password']
+        try:
+            r_host = Host(host.get_address(), password)
+        except Exception, e:
+            return e
+        cmd = '/give_mac_return_ip -m %s -i %s' % (mac, bridge)
+        out = r_host.run_bash_command(cmd)
+        return out[out.find('Acquired IP:')+13:].rstrip()
+
+    def select_host_from_cluster(self, cluster):
+        for host in self.api.hosts.list():
+            if host.get_cluster().get_id() == cluster:
+                password = self.collect_params(host.get_name(),
+                                               'hypervisors')['password']
+                r_host = Host(host.get_address(), password)
+                if not r_host.has_file('/give_mac_return_ip'):
+                    self.ini_host(host)
+                return host
+
+

@@ -66,7 +66,7 @@ _ovirt-remote()
       return 0
       ;;
     operating_system)
-      COMPREPLY=( $(compgen -W "$os_types" -- ${cur}) )
+      COMPREPLY=( $(compgen -W "$os_types --password" -- ${cur}) )
       return 0
       ;;
 	  set)
@@ -116,7 +116,7 @@ _ovirt-remote()
       return 0
       ;;
     operating_system)
-      COMPREPLY=( $(compgen -W "$vm_names" -- ${cur}) )
+      COMPREPLY=( $(compgen -W "$vm_names --password" -- ${cur}) )
       return 0
       ;;
     iscsi_login)
