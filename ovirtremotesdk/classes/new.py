@@ -4,6 +4,7 @@ from time import sleep
 
 
 class New(remote_operation_object):
+    """ create a new oVirt object """
     def __init__(self, setup_dictionary, machine_readable):
         super(New, self).__init__(setup_dictionary, machine_readable)
 

@@ -5,6 +5,7 @@ from ovirtsdk.xml import params
 
 
 class Get(remote_operation_object):
+    """ get or querry info of/on an object or field """
     def __init__(self, setup_dictionary, machine_readable):
         super(Get, self).__init__(setup_dictionary, machine_readable)
 

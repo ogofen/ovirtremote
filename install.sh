@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#ovirt-remote old installation script, needs to be updated
 pythonRPM=`rpm -qa | grep ^python-2`
 path=/usr/lib/${pythonRPM:0:6}${pythonRPM:7:3}/site-packages
 etc_path=/etc/ovirt-remote/

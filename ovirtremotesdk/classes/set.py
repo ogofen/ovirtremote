@@ -7,6 +7,7 @@ from ovirtsdk.xml import params
 
 
 class Set(remote_operation_object):
+    """ modify a remote object """
     def __init__(self, setup_dictionary, machine_readable):
         super(Set, self).__init__(setup_dictionary, machine_readable)
 

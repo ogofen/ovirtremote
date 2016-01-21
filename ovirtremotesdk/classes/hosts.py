@@ -5,6 +5,7 @@ import sys
 
 
 class Host(object):
+    """ performs non py-sdk remote operations using paramiko """
     def __init__(self, address, passwd):
         self.address = address
         self.passwd = passwd

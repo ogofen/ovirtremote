@@ -3,6 +3,7 @@ from ovirtremotesdk.classes.ovirtremoteobject import remote_operation_object
 
 
 class Delete(remote_operation_object):
+    """ deleting an oVirt object """
     def __init__(self, setup_dictionary, machine_readable):
         super(Delete, self).__init__(setup_dictionary, machine_readable)
 
@@ -48,7 +49,6 @@ class Delete(remote_operation_object):
         if sd.get_type() == 'iso':
             sd_no_dc.delete(sd_no_dc)
             return 'successful'
-
         sd_no_dc.set_format('True')
         sd_no_dc.delete(sd_no_dc)
         return 'successful'
@@ -73,6 +73,7 @@ class Delete(remote_operation_object):
                     disk.delete()
                 except Exception:
                     pass
+        return 'successful'
 
     def vm(self, vm_name):
         """ removes a vm """

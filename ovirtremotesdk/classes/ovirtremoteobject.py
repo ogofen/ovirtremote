@@ -6,11 +6,13 @@ import sys
 
 
 class ovirt_remote_base(object):
+    """basic ovirt-remote class that contains the common defs"""
     def __init__(self):
         self.image_path = '/.iso'
         self.path = "/etc/ovirt-remote"
 
     def write_object_to_file(self, path, obj):
+        """ writing an object to file for further bash_completion use"""
         file = open("/tmp/"+path, 'w')
         file.write(obj)
 
@@ -87,6 +89,7 @@ class ovirt_remote_base(object):
 
 
 class remote_operation_object(ovirt_remote_base):
+    """simple remote operation class that connects to an oVirt setup and can perform simple fuctions"""
     def __init__(self, setup, machine_readable):
         super(remote_operation_object, self).__init__()
         self.machine_readable = machine_readable
